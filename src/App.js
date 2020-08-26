@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from "react-dom";
 import './App.css';
-
+import {evaluate, compareText} from 'mathjs';
 const canvas = document.getElementById("game");
 const context = canvas.getContext("2d");
 const canvasWrapper = document.getElementById("canvasWrapper").getBoundingClientRect();
@@ -10,7 +10,7 @@ canvas.height = canvasWrapper.height; // responsive changes to size of screen
 canvas.width = canvasWrapper.width;
 
 
-let pointInterval = 0.1; // change for balance of smoothness of line with time to compute
+
 
 context.setTransform(1, 0, 0, -1, canvas.width/2,canvas.height/2); // inverts y-axis in order to increase as you move further up as in the cartesian plane
 
@@ -18,18 +18,26 @@ context.setTransform(1, 0, 0, -1, canvas.width/2,canvas.height/2); // inverts y-
   let graphObject = { // main object, with all canvas manipulation methods
     upperLimit : canvas.width/2,
     lowerLimit :-canvas.width/2,
-    
-    calculate : function(value){
-      return value**2 ;
+    pointInterval: 0.1, // changes for balance of smoothness of line with time to compute, increase with more zoom decrease with less zoom
+    expression : null,
+    calculate : function(input){
+      const expr = "" + this.expression;
+      const scope = {
+        x: input
+      }
+      if(expr.length > 0){
+        return evaluate(expr,scope);
+      }
+      
     }
     ,
     GraphCalculator: function() { // draws graph
      
-      
+      this.Clear();
       context.beginPath();
       context.moveTo(this.lowerLimit,this.calculate(this.lowerLimit));
       
-     for(let i = this.lowerLimit ; i < this.upperLimit ; i+= pointInterval){
+     for(let i = this.lowerLimit ; i < this.upperLimit ; i+= this.pointInterval){
           context.lineTo(i,this.calculate(i));
       }
       context.stroke();
@@ -37,23 +45,32 @@ context.setTransform(1, 0, 0, -1, canvas.width/2,canvas.height/2); // inverts y-
     
     ScaleUp: function(){ 
       
-      context.clearRect(this.lowerLimit, -canvas.height/2, canvas.width, canvas.height);
+      
       context.scale(2,2);
       changeScale(2);
+      this.lowerLimit*=0.5;
+      this.upperLimit*=0.5;
+      this.pointInterval *=0.5;
       this.GraphCalculator();
       
     },
     ScaleDown: function(){
       
-      context.clearRect(-canvas.width/2, -canvas.height/2, canvas.width, canvas.height);
+      
       context.scale(0.5, 0.5);
       changeScale(0.5);
+      this.lowerLimit*=2;
+      this.upperLimit*=2;
+      this.pointInterval *=2;
       this.GraphCalculator();
       
       
     },
     Clear: function(){
-      context.clearRect(this.lowerLimit, -canvas.height/2, canvas.width, canvas.height);
+      context.save();
+      context.setTransform(1,0,0,1,0,0);
+      context.clearRect(0,0,context.canvas.width,context.canvas.height);
+      context.restore();
     }
     
   }
@@ -110,19 +127,40 @@ context.setTransform(1, 0, 0, -1, canvas.width/2,canvas.height/2); // inverts y-
     console.log(this.state.Scale)
   }
 
+
+  class Input extends React.Component{ // where we type in the function
+   
+    handleChange(e){
+     graphObject.expression = e.target.value
+    }
+
+    render(){
+      return(
+        <div>
+          <input onChange={this.handleChange.bind(this)} type="text" >
+          </input>
+        </div>
+        
+
+      )
+    }
+
+  }
   class App extends React.Component{ // main component that is rendered
 
     render(){
       return (
         <div>
-         <div>
-           <GraphAction method ="Evaluate"/>
-           <GraphAction method ="ScaleUp"/>
-           <GraphAction method ="ScaleDown"/>
-           <GraphAction method ="Clear"/>
+          <div>
+            <Input/>
+          </div>
+          <div>
+             <GraphAction method ="Evaluate"/>
+             <GraphAction method ="ScaleUp"/>
+             <GraphAction method ="ScaleDown"/>
+             <GraphAction method ="Clear"/>
 
-
-         </div>
+          </div>
          <div>
            <GraphScale />
          </div>
