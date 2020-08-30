@@ -3,25 +3,58 @@ import ReactDOM from "react-dom";
 import './App.css';
 import {evaluate} from 'mathjs';
 //#region Setup
-const canvas = document.getElementById("game");
-const context = canvas.getContext("2d");
-const canvasWrapper = document.getElementById("canvasWrapper").getBoundingClientRect();
-canvas.height = canvasWrapper.height; // responsive changes to size of screen
-canvas.width = canvasWrapper.width;
-context.setTransform(1, 0, 0, -1, canvas.width/2,canvas.height/2); // inverts y-axis in order to increase as you move further up as in the cartesian plane
+
+
+
 
 //#endregion
 //#region Graph Actions
   let graphObject = { // main object, with all canvas manipulation methods
-    upperLimitX : canvas.width/2,
-    lowerLimitX :-canvas.width/2,
-    upperLimitY : canvas.height/2,
-    lowerLimitY :-canvas.height/2,
-    numGrids: 10, // number of grid markings
+    canvas: document.getElementById("game"),
+   
+    Setup: function(){
+      this.context = graphObject.canvas.getContext("2d")
+      this.canvasWrapper = document.getElementById("canvasWrapper").getBoundingClientRect();
+      this.canvas.height = this.canvasWrapper.height;
+      this.canvas.width = this.canvasWrapper.width;
+      this.upperLimitX = this.canvas.width/2;
+      this.lowerLimitX =-this.canvas.width/2;
+      this.upperLimitY = this.canvas.height/2;
+      this.lowerLimitY =-this.canvas.height/2;
+      this.context.setTransform(1, 0, 0, -1, this.canvas.width/2,this.canvas.height/2); // inverts y-axis in order to increase as you move further up as in the cartesian plane
+      
+      this.numGrids = 10; // number of grid markings
+      this.pointInterval = 0.1; // changes for balance of smoothness of line with time to compute, increase with more zoom decrease with less zoom
+      this.expression = null;
+      this.fontSize = 10;
 
-    pointInterval: 0.1, // changes for balance of smoothness of line with time to compute, increase with more zoom decrease with less zoom
-    expression : null,
-    fontSize: 10,
+
+  //  this.dragCoords = {
+   //     x: 0,
+    //    y: 0
+   //   }
+   //   this.dragging = false;
+
+    //  this.canvas.addEventListener("mousedown", function(event){
+    //    this.dragging = true;
+    //    this.dragCoords ={
+    //      x: event.clientX,
+   //       y: event.clientY
+    //    }
+   //   })
+    //  this.canvas.addEventListener("mousemove", function(event){
+    //    if(this.dragging = true){
+    //      graphObject.ShiftGraph(event.clientX,event.clientY); 
+
+     //   }
+       
+     // })
+     // this.canvas.addEventListener("mouseup", function(event){
+     //   this.dragging = false;
+      
+     // })
+
+    },
     calculate : function(input){
       
       const scope = {
@@ -48,13 +81,17 @@ context.setTransform(1, 0, 0, -1, canvas.width/2,canvas.height/2); // inverts y-
       this.Clear();
      this.DrawAxes();
       
-      context.beginPath(); // graph
-      context.moveTo(this.lowerLimitX,this.calculate(this.lowerLimitX));
+     this.context.beginPath(); // graph
+     this.context.moveTo(this.lowerLimitX,this.calculate(this.lowerLimitX));
       
      for(let i = this.lowerLimitX ; i < this.upperLimitX ; i+= this.pointInterval){
-          context.lineTo(i,this.calculate(i));
+       const value = this.calculate(i);
+       if(value < this.upperLimitY && value > this.lowerLimitY){
+        this.context.lineTo(i,value);
+       }
+         
       }
-      context.stroke();
+      this.context.stroke();
     }
      }
      ,
@@ -62,7 +99,7 @@ context.setTransform(1, 0, 0, -1, canvas.width/2,canvas.height/2); // inverts y-
     ScaleUp: function(){ 
       
       this.fontSize*=0.5;
-      context.scale(2,2);
+      this.context.scale(2,2);
       changeScale(2);
       this.lowerLimitX*=0.5;
       this.upperLimitX*=0.5;
@@ -73,7 +110,7 @@ context.setTransform(1, 0, 0, -1, canvas.width/2,canvas.height/2); // inverts y-
     ScaleDown: function(){
       
       this.fontSize*=2;
-      context.scale(0.5, 0.5);
+      this.context.scale(0.5, 0.5);
       changeScale(0.5);
       this.lowerLimitX*=2;
       this.upperLimitX*=2;
@@ -83,58 +120,64 @@ context.setTransform(1, 0, 0, -1, canvas.width/2,canvas.height/2); // inverts y-
       
     },
     Clear: function(){
-      context.save();
-      context.setTransform(1,0,0,1,0,0);
-      context.clearRect(0,0,context.canvas.width,context.canvas.height);
-      context.restore();
-      //context.scale(1, -1);
-     // context.fillText("5", 5, 0);
-     // context.restore();
+      this.context.save();
+      this.context.setTransform(1,0,0,1,0,0);
+      this.context.clearRect(0,0,this.context.canvas.width,this.context.canvas.height);
+      this.context.restore();
+  
       
       
       
     },
     DrawAxes : function(){
 
-      context.beginPath(); // axes
-      context.moveTo(this.lowerLimitX,0);
-      context.lineTo(this.upperLimitX,0);
+      this.context.beginPath(); // axes
+      this.context.moveTo(this.lowerLimitX,0);
+      this.context.lineTo(this.upperLimitX,0);
 
-      context.moveTo(0,this.upperLimitY);
-      context.lineTo(0,this.lowerLimitY);
-      context.stroke();
+      this.context.moveTo(0,this.upperLimitY);
+      this.context.lineTo(0,this.lowerLimitY);
+      this.context.stroke();
 
-      context.save();
-      context.scale(1,-1);
+      this.context.save();
+      this.context.scale(1,-1);
 
-      const roundedlowerLimitX = Math.floor(this.lowerLimitX/100)*100;
+      const roundedlowerLimitX = Math.floor(this.lowerLimitX/100)*100; // numbering
       const roundedupperLimitX = Math.ceil(this.upperLimitX/100)*100;
       console.log(this.lowerLimitX);
       console.log(roundedlowerLimitX);
 
       for(let x = roundedlowerLimitX ; x < roundedupperLimitX; x+=(roundedupperLimitX-roundedlowerLimitX)/this.numGrids){ // numbering
-        context.font= this.fontSize+'px sans-serif';
+        this.context.font= this.fontSize+'px sans-serif';
         
-        context.fillText(x, x, -1);
+        this.context.fillText(x, x, -1);
         
       }
     
-      context.restore();
+      this.context.restore();
       
 
     },
-    ShiftGraph: function(shiftBy){ // + moves left - moves right
-      context.transform(1, 0, 0, 1, shiftBy, 0);
-      this.upperLimitX-=shiftBy;
-      this.lowerLimitX-=shiftBy;
+    ShiftGraph: function(shiftByX,shiftByY){ 
+
+
+      this.context.transform(1, 0, 0, 1, shiftByX, shiftByY);
+      this.upperLimitX-=shiftByX;
+      this.lowerLimitX-=shiftByX;
+      this.upperLimitY-=shiftByY;
+      this.lowerLimitY-=shiftByY;
       this.GraphCalculator();
       
 
-    }
+    },
+    
     
   }
+  window.onload = graphObject.Setup();
 //#endregion
  
+
+
 //#region React components
   class GraphAction extends React.Component{ // any button 
     
@@ -154,10 +197,14 @@ context.setTransform(1, 0, 0, -1, canvas.width/2,canvas.height/2); // inverts y-
           case "Clear":
             return  <button onClick={() => graphObject.Clear()} >Clear</button>
           case "ShiftL":
-          return  <button onClick={() => graphObject.ShiftGraph(20)} >Shift Left</button>
+          return  <button onClick={() => graphObject.ShiftGraph(20,0)} >Shift Left</button>
           case "ShiftR":
-          return  <button onClick={() => graphObject.ShiftGraph(-20)} >Shift Right</button>
-          
+          return  <button onClick={() => graphObject.ShiftGraph(-20,0)} >Shift Right</button>
+          case "ShiftU":
+          return  <button onClick={() => graphObject.ShiftGraph(0,-20)} >Shift Up</button>
+          case "ShiftD":
+          return  <button onClick={() => graphObject.ShiftGraph(-0,20)} >Shift Down</button>
+            
           default:
             return null;
         }
@@ -226,6 +273,8 @@ context.setTransform(1, 0, 0, -1, canvas.width/2,canvas.height/2); // inverts y-
              <GraphAction method ="Clear"/>
              <GraphAction method ="ShiftL"/>
              <GraphAction method ="ShiftR"/>
+             <GraphAction method ="ShiftU"/>
+             <GraphAction method ="ShiftD"/>
           </div>
          <div>
            <GraphScale />
