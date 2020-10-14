@@ -24,36 +24,44 @@ import {evaluate} from 'mathjs';
       this.context.setTransform(1, 0, 0, -1, this.canvas.width/2,this.canvas.height/2); // inverts y-axis in order to increase as you move further up as in the cartesian plane
       
       this.numGrids = 10; // number of grid markings
-      this.pointInterval = 0.1; // changes for balance of smoothness of line with time to compute, increase with more zoom decrease with less zoom
+      this.pointInterval = 1; // changes for balance of smoothness of line with time to compute, increase with more zoom decrease with less zoom
       this.expression = null;
       this.fontSize = 10;
 
 
-  //  this.dragCoords = {
-   //     x: 0,
-    //    y: 0
-   //   }
-   //   this.dragging = false;
+     this.dragCoords = {
+        x: 0,
+        y: 0
+      }
+      this.dragging = false;
 
-    //  this.canvas.addEventListener("mousedown", function(event){
-    //    this.dragging = true;
-    //    this.dragCoords ={
-    //      x: event.clientX,
-   //       y: event.clientY
-    //    }
-   //   })
-    //  this.canvas.addEventListener("mousemove", function(event){
-    //    if(this.dragging = true){
-    //      graphObject.ShiftGraph(event.clientX,event.clientY); 
+      this.canvas.addEventListener("mousedown", function(event){
+       this.dragging = true;
+        this.dragCoords ={
+          x: event.clientX,
+          y: event.clientY
+        }
+        })
+      this.canvas.addEventListener("mousemove", function(event){
+        if(this.dragging === true){
+          graphObject.ShiftGraph(event.clientX- this.dragCoords.x ,this.dragCoords.y - event.clientY); 
 
-     //   }
+        }
+        this.dragCoords ={
+          x: event.clientX,
+          y: event.clientY
+        }
        
-     // })
-     // this.canvas.addEventListener("mouseup", function(event){
-     //   this.dragging = false;
+        })
+      this.canvas.addEventListener("mouseup", function(event){
+        this.dragging = false;
       
-     // })
+      })
 
+      this.canvas.addEventListener("mouseout", function(event){
+        this.dragging = false;
+      
+      })
     },
     calculate : function(input){
       
@@ -144,16 +152,25 @@ import {evaluate} from 'mathjs';
 
       const roundedlowerLimitX = Math.floor(this.lowerLimitX/100)*100; // numbering
       const roundedupperLimitX = Math.ceil(this.upperLimitX/100)*100;
-      console.log(this.lowerLimitX);
-      console.log(roundedlowerLimitX);
-
+     
       for(let x = roundedlowerLimitX ; x < roundedupperLimitX; x+=(roundedupperLimitX-roundedlowerLimitX)/this.numGrids){ // numbering
         this.context.font= this.fontSize+'px sans-serif';
         
         this.context.fillText(x, x, -1);
         
       }
-    
+  
+      const roundedlowerLimitY = Math.floor(this.lowerLimitY/100)*100; // numbering
+      const roundedupperLimitY = Math.ceil(this.upperLimitY/100)*100;
+      console.log(this.lowerLimitY);
+      
+      for(let y = roundedlowerLimitY ; y < roundedupperLimitY; y+=(roundedupperLimitY-roundedlowerLimitY)/this.numGrids){ // numbering
+        this.context.font= this.fontSize+'px sans-serif';
+        
+        this.context.fillText(y, 1, -y);
+        
+      }
+      
       this.context.restore();
       
 
