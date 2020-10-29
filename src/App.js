@@ -36,6 +36,7 @@ import {evaluate} from 'mathjs';
       this.dragging = false;
 
       this.canvas.addEventListener("mousedown", function(event){
+        
        this.dragging = true;
         this.dragCoords ={
           x: event.clientX,
@@ -53,16 +54,32 @@ import {evaluate} from 'mathjs';
         }
        
         })
-      this.canvas.addEventListener("mouseup", function(event){
+      this.canvas.addEventListener("mouseup", function(){
         this.dragging = false;
-      
+        
       })
 
-      this.canvas.addEventListener("mouseout", function(event){
+      this.canvas.addEventListener("mouseout", function(){
         this.dragging = false;
+     
       
       })
+      this.canvas.addEventListener("wheel", function(event){
+        if (event.deltaY < 0) {
+          // Zoom out
+          
+          graphObject.Scale(0.9);
+        }
+        else {
+          // Zoom in
+          graphObject.Scale(1.1);
+        }
+        
+      })
+      
     },
+
+  
     calculate : function(input){
       
       const scope = {
@@ -104,27 +121,16 @@ import {evaluate} from 'mathjs';
      }
      ,
     
-    ScaleUp: function(){ 
+    Scale: function(ratio){ 
       
-      this.fontSize*=0.5;
-      this.context.scale(2,2);
-      changeScale(2);
-      this.lowerLimitX*=0.5;
-      this.upperLimitX*=0.5;
-      this.pointInterval *=0.5;
+      this.fontSize*=ratio;
+      this.context.scale(1/ratio,1/ratio);
+      this.lowerLimitX*=ratio;
+      this.upperLimitX*=ratio;
+      this.lowerLimitY*=ratio;
+      this.upperLimitY*=ratio;
+      this.pointInterval *=ratio;
       this.GraphCalculator();
-      
-    },
-    ScaleDown: function(){
-      
-      this.fontSize*=2;
-      this.context.scale(0.5, 0.5);
-      changeScale(0.5);
-      this.lowerLimitX*=2;
-      this.upperLimitX*=2;
-      this.pointInterval *=2;
-      this.GraphCalculator();
-      
       
     },
     Clear: function(){
@@ -202,26 +208,13 @@ import {evaluate} from 'mathjs';
       
         switch(this.props.method){
 
-          case "ScaleUp":
-           return <button onClick={() => graphObject.ScaleUp()} >Scale Up!</button>
-          
-          case "ScaleDown":
-            return  <button onClick={() => graphObject.ScaleDown()} >Scale Down!</button>
-          
+       
           case "Evaluate":
             return  <button onClick={() => graphObject.GraphCalculator()} >Evaluate</button>
   
           case "Clear":
             return  <button onClick={() => graphObject.Clear()} >Clear</button>
-          case "ShiftL":
-          return  <button onClick={() => graphObject.ShiftGraph(20,0)} >Shift Left</button>
-          case "ShiftR":
-          return  <button onClick={() => graphObject.ShiftGraph(-20,0)} >Shift Right</button>
-          case "ShiftU":
-          return  <button onClick={() => graphObject.ShiftGraph(0,-20)} >Shift Up</button>
-          case "ShiftD":
-          return  <button onClick={() => graphObject.ShiftGraph(-0,20)} >Shift Down</button>
-            
+       
           default:
             return null;
         }
@@ -230,31 +223,6 @@ import {evaluate} from 'mathjs';
     
 
   }
-
-
-  class GraphScale extends React.Component{ // scale indicator
-      constructor(props){
-        super(props);
-        this.state = {
-            Scale: 100
-        }
-        changeScale = changeScale.bind(this);
-        
-      }
-      
-      render(){
-        
-      return <h1>{this.state.Scale}%</h1>
-
-      }
-
-  }
-  function changeScale(ratio){ // changes state of scale value to update scale indicator
-    let previousScale = this.state.Scale;
-    this.setState({Scale: previousScale *ratio})
-    
-  }
-
 
   class Input extends React.Component{ // where we type in the function
    
@@ -285,17 +253,11 @@ import {evaluate} from 'mathjs';
           </div>
           <div>
              <GraphAction method ="Evaluate"/>
-             <GraphAction method ="ScaleUp"/>
-             <GraphAction method ="ScaleDown"/>
+            
              <GraphAction method ="Clear"/>
-             <GraphAction method ="ShiftL"/>
-             <GraphAction method ="ShiftR"/>
-             <GraphAction method ="ShiftU"/>
-             <GraphAction method ="ShiftD"/>
+           
           </div>
-         <div>
-           <GraphScale />
-         </div>
+    
         </div>
       )
     }
