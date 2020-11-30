@@ -2,32 +2,27 @@ import React from 'react';
 import ReactDOM from "react-dom";
 import './App.css';
 import {evaluate} from 'mathjs';
-//#region Setup
 
-
-
-
-//#endregion
+const canvas = document.getElementById("game");
+const context = canvas.getContext("2d");
+let canvasHeight;
+let canvasWidth;
 //#region Graph Actions
   let graphObject = { // main object, with all canvas manipulation methods
-    canvas: document.getElementById("game"),
    
     Setup: function(){
-      this.context = graphObject.canvas.getContext("2d")
-      this.canvasWrapper = document.getElementById("canvasWrapper").getBoundingClientRect();
-      this.canvas.height = this.canvasWrapper.height;
-      this.canvas.width = this.canvasWrapper.width;
-      this.upperLimitX = this.canvas.width/2;
-      this.lowerLimitX =-this.canvas.width/2;
-      this.upperLimitY = this.canvas.height/2;
-      this.lowerLimitY =-this.canvas.height/2;
-      this.context.setTransform(1, 0, 0, -1, this.canvas.width/2,this.canvas.height/2); // inverts y-axis in order to increase as you move further up as in the cartesian plane
+      
+      this.upperLimitX = canvasWidth/2;
+      this.lowerLimitX =-canvasWidth/2;
+      this.upperLimitY = canvasHeight/2;
+      this.lowerLimitY =-canvasHeight/2;
+      context.setTransform(1, 0, 0, -1, canvasWidth/2,canvasHeight/2); // inverts y-axis in order to increase as you move further up as in the cartesian plane
       
       this.numGrids = 10; // number of grid markings
-      this.pointInterval = 1; // changes for balance of smoothness of line with time to compute, increase with more zoom decrease with less zoom
+      this.pointInterval = 2; // changes for balance of smoothness of line with time to compute, increase with more zoom decrease with less zoom
       this.expression = null;
       this.fontSize = 10;
-
+      
 
      this.dragCoords = {
         x: 0,
@@ -35,7 +30,7 @@ import {evaluate} from 'mathjs';
       }
       this.dragging = false;
 
-      this.canvas.addEventListener("mousedown", function(event){
+      canvas.addEventListener("mousedown", function(event){
         
        this.dragging = true;
         this.dragCoords ={
@@ -43,7 +38,7 @@ import {evaluate} from 'mathjs';
           y: event.clientY
         }
         })
-      this.canvas.addEventListener("mousemove", function(event){
+      canvas.addEventListener("mousemove", function(event){
         if(this.dragging === true){
           graphObject.ShiftGraph(event.clientX- this.dragCoords.x ,this.dragCoords.y - event.clientY); 
 
@@ -54,17 +49,17 @@ import {evaluate} from 'mathjs';
         }
        
         })
-      this.canvas.addEventListener("mouseup", function(){
+      canvas.addEventListener("mouseup", function(){
         this.dragging = false;
         
       })
 
-      this.canvas.addEventListener("mouseout", function(){
+      canvas.addEventListener("mouseout", function(){
         this.dragging = false;
      
       
       })
-      this.canvas.addEventListener("wheel", function(event){
+      canvas.addEventListener("wheel", function(event){
         if (event.deltaY < 0) {
           // Zoom out
           
@@ -104,19 +99,20 @@ import {evaluate} from 'mathjs';
     GraphCalculator: function() { // everything to do with drawing on the canvas
      if(this.ExpressionValidifier() === true){
       this.Clear();
+      
      this.DrawAxes();
       
-     this.context.beginPath(); // graph
-     this.context.moveTo(this.lowerLimitX,this.calculate(this.lowerLimitX));
+     context.beginPath(); // graph
+     context.moveTo(this.lowerLimitX,this.calculate(this.lowerLimitX));
       
      for(let i = this.lowerLimitX ; i < this.upperLimitX ; i+= this.pointInterval){
        const value = this.calculate(i);
        if(value < this.upperLimitY && value > this.lowerLimitY){
-        this.context.lineTo(i,value);
+        context.lineTo(i,value);
        }
          
       }
-      this.context.stroke();
+      context.stroke();
     }
      }
      ,
@@ -124,7 +120,7 @@ import {evaluate} from 'mathjs';
     Scale: function(ratio){ 
       
       this.fontSize*=ratio;
-      this.context.scale(1/ratio,1/ratio);
+      context.scale(1/ratio,1/ratio);
       this.lowerLimitX*=ratio;
       this.upperLimitX*=ratio;
       this.lowerLimitY*=ratio;
@@ -134,10 +130,10 @@ import {evaluate} from 'mathjs';
       
     },
     Clear: function(){
-      this.context.save();
-      this.context.setTransform(1,0,0,1,0,0);
-      this.context.clearRect(0,0,this.context.canvas.width,this.context.canvas.height);
-      this.context.restore();
+      context.save();
+      context.setTransform(1,0,0,1,0,0);
+      context.clearRect(0,0,canvasWidth,canvasHeight);
+      context.restore();
   
       
       
@@ -145,24 +141,24 @@ import {evaluate} from 'mathjs';
     },
     DrawAxes : function(){
 
-      this.context.beginPath(); // axes
-      this.context.moveTo(this.lowerLimitX,0);
-      this.context.lineTo(this.upperLimitX,0);
+      context.beginPath(); // axes
+      context.moveTo(this.lowerLimitX,0);
+      context.lineTo(this.upperLimitX,0);
 
-      this.context.moveTo(0,this.upperLimitY);
-      this.context.lineTo(0,this.lowerLimitY);
-      this.context.stroke();
+      context.moveTo(0,this.upperLimitY);
+      context.lineTo(0,this.lowerLimitY);
+      context.stroke();
 
-      this.context.save();
-      this.context.scale(1,-1);
+      context.save();
+      context.scale(1,-1);
 
       const roundedlowerLimitX = Math.floor(this.lowerLimitX/100)*100; // numbering
       const roundedupperLimitX = Math.ceil(this.upperLimitX/100)*100;
      
       for(let x = roundedlowerLimitX ; x < roundedupperLimitX; x+=(roundedupperLimitX-roundedlowerLimitX)/this.numGrids){ // numbering
-        this.context.font= this.fontSize+'px sans-serif';
+        context.font= this.fontSize+'px sans-serif';
         
-        this.context.fillText(x, x, -1);
+        context.fillText(x, x, -1);
         
       }
   
@@ -171,20 +167,20 @@ import {evaluate} from 'mathjs';
       console.log(this.lowerLimitY);
       
       for(let y = roundedlowerLimitY ; y < roundedupperLimitY; y+=(roundedupperLimitY-roundedlowerLimitY)/this.numGrids){ // numbering
-        this.context.font= this.fontSize+'px sans-serif';
+        context.font= this.fontSize+'px sans-serif';
         
-        this.context.fillText(y, 1, -y);
+        context.fillText(y, 1, -y);
         
       }
       
-      this.context.restore();
+      context.restore();
       
 
     },
     ShiftGraph: function(shiftByX,shiftByY){ 
 
 
-      this.context.transform(1, 0, 0, 1, shiftByX, shiftByY);
+      context.transform(1, 0, 0, 1, shiftByX, shiftByY);
       this.upperLimitX-=shiftByX;
       this.lowerLimitX-=shiftByX;
       this.upperLimitY-=shiftByY;
@@ -196,10 +192,73 @@ import {evaluate} from 'mathjs';
     
     
   }
-  window.onload = graphObject.Setup();
+  
+
 //#endregion
  
+//#region Game Loop
+let gameObjects = [];
+let secondsPassed = 0;
+let oldTimeStamp = 0;
+function start(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvasHeight = canvas.height
+  canvasWidth = canvas.width
+  graphObject.Setup();
+  window.requestAnimationFrame(gameLoop);
+}
+// gameloop
 
+function gameLoop(timeStamp){
+  secondsPassed = (timeStamp-oldTimeStamp) /1000;
+  oldTimeStamp = timeStamp;
+  
+  // gravity
+  gameObjects.forEach(obj => {
+    obj.y +=1;
+});
+
+  // draws each object
+  gameObjects.forEach(obj => {
+    obj.draw();
+});
+  
+  window.requestAnimationFrame(gameLoop);
+}
+
+
+
+
+
+class Gameobject {
+  constructor(context,x,y,vx,vy){
+      context = context;
+      this.x = x;
+      this.y = y;
+      this.vx = vx;
+      this.vy = vy;
+      this.isColliding = false;
+  }
+
+}
+class Car extends Gameobject {
+
+  constructor(context,x,y,vx,vy){
+      super(context,x,y,vx,vy);
+  }
+  draw(){
+      context.clearRect(0, 0, canvasWidth, canvasHeight);
+      
+      context.fillRect(this.x, this.y, 500, 500);
+  }
+  update(){
+    this.y += 1 * secondsPassed;
+  }
+}
+new Car();
+
+//#endregion
 
 //#region React components
   class GraphAction extends React.Component{ // any button 
@@ -265,3 +324,4 @@ import {evaluate} from 'mathjs';
 
 ReactDOM.render(<App />,document.getElementById("evaluate"));
 //#endregion
+window.onload = start();
