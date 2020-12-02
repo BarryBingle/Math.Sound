@@ -3,20 +3,24 @@ import ReactDOM from "react-dom";
 import './App.css';
 import {evaluate} from 'mathjs';
 
-const canvas = document.getElementById("game");
-const context = canvas.getContext("2d");
-let canvasHeight;
-let canvasWidth;
+const graphCanvas = document.getElementById("graphCanvas");
+const graphContext = graphCanvas.getContext("2d");
+const gameCanvas = document.getElementById("gameCanvas")
+const gameContext = gameCanvas.getContext("2d");
+let graphCanvasHeight;
+let graphCanvasWidth;
+let gameCanvasHeight;
+let gameCanvasWidth;
 //#region Graph Actions
-  let graphObject = { // main object, with all canvas manipulation methods
+  let graphObject = { // main object, with all graphCanvas manipulation methods
    
     Setup: function(){
       
-      this.upperLimitX = canvasWidth/2;
-      this.lowerLimitX =-canvasWidth/2;
-      this.upperLimitY = canvasHeight/2;
-      this.lowerLimitY =-canvasHeight/2;
-      context.setTransform(1, 0, 0, -1, canvasWidth/2,canvasHeight/2); // inverts y-axis in order to increase as you move further up as in the cartesian plane
+      this.upperLimitX = graphCanvasWidth/2;
+      this.lowerLimitX =-graphCanvasWidth/2;
+      this.upperLimitY = graphCanvasHeight/2;
+      this.lowerLimitY =-graphCanvasHeight/2;
+      graphContext.setTransform(1, 0, 0, -1, graphCanvasWidth/2,graphCanvasHeight/2); // inverts y-axis in order to increase as you move further up as in the cartesian plane
       
       this.numGrids = 10; // number of grid markings
       this.pointInterval = 2; // changes for balance of smoothness of line with time to compute, increase with more zoom decrease with less zoom
@@ -30,7 +34,7 @@ let canvasWidth;
       }
       this.dragging = false;
 
-      canvas.addEventListener("mousedown", function(event){
+      graphCanvas.addEventListener("mousedown", function(event){
         
        this.dragging = true;
         this.dragCoords ={
@@ -38,7 +42,7 @@ let canvasWidth;
           y: event.clientY
         }
         })
-      canvas.addEventListener("mousemove", function(event){
+      graphCanvas.addEventListener("mousemove", function(event){
         if(this.dragging === true){
           graphObject.ShiftGraph(event.clientX- this.dragCoords.x ,this.dragCoords.y - event.clientY); 
 
@@ -49,17 +53,17 @@ let canvasWidth;
         }
        
         })
-      canvas.addEventListener("mouseup", function(){
+      graphCanvas.addEventListener("mouseup", function(){
         this.dragging = false;
         
       })
 
-      canvas.addEventListener("mouseout", function(){
+      graphCanvas.addEventListener("mouseout", function(){
         this.dragging = false;
      
       
       })
-      canvas.addEventListener("wheel", function(event){
+      graphCanvas.addEventListener("wheel", function(event){
         if (event.deltaY < 0) {
           // Zoom out
           
@@ -96,23 +100,23 @@ let canvasWidth;
         return false;
       }
     },
-    GraphCalculator: function() { // everything to do with drawing on the canvas
+    GraphCalculator: function() { // everything to do with drawing on the graphCanvas
      if(this.ExpressionValidifier() === true){
       this.Clear();
       
      this.DrawAxes();
       
-     context.beginPath(); // graph
-     context.moveTo(this.lowerLimitX,this.calculate(this.lowerLimitX));
+     graphContext.beginPath(); // graph
+     graphContext.moveTo(this.lowerLimitX,this.calculate(this.lowerLimitX));
       
      for(let i = this.lowerLimitX ; i < this.upperLimitX ; i+= this.pointInterval){
        const value = this.calculate(i);
        if(value < this.upperLimitY && value > this.lowerLimitY){
-        context.lineTo(i,value);
+        graphContext.lineTo(i,value);
        }
          
       }
-      context.stroke();
+      graphContext.stroke();
     }
      }
      ,
@@ -120,7 +124,7 @@ let canvasWidth;
     Scale: function(ratio){ 
       
       this.fontSize*=ratio;
-      context.scale(1/ratio,1/ratio);
+      graphContext.scale(1/ratio,1/ratio);
       this.lowerLimitX*=ratio;
       this.upperLimitX*=ratio;
       this.lowerLimitY*=ratio;
@@ -130,10 +134,10 @@ let canvasWidth;
       
     },
     Clear: function(){
-      context.save();
-      context.setTransform(1,0,0,1,0,0);
-      context.clearRect(0,0,canvasWidth,canvasHeight);
-      context.restore();
+      graphContext.save();
+      graphContext.setTransform(1,0,0,1,0,0);
+      graphContext.clearRect(0,0,graphCanvasWidth,graphCanvasHeight);
+      graphContext.restore();
   
       
       
@@ -141,24 +145,24 @@ let canvasWidth;
     },
     DrawAxes : function(){
 
-      context.beginPath(); // axes
-      context.moveTo(this.lowerLimitX,0);
-      context.lineTo(this.upperLimitX,0);
+      graphContext.beginPath(); // axes
+      graphContext.moveTo(this.lowerLimitX,0);
+      graphContext.lineTo(this.upperLimitX,0);
 
-      context.moveTo(0,this.upperLimitY);
-      context.lineTo(0,this.lowerLimitY);
-      context.stroke();
+      graphContext.moveTo(0,this.upperLimitY);
+      graphContext.lineTo(0,this.lowerLimitY);
+      graphContext.stroke();
 
-      context.save();
-      context.scale(1,-1);
+      graphContext.save();
+      graphContext.scale(1,-1);
 
       const roundedlowerLimitX = Math.floor(this.lowerLimitX/100)*100; // numbering
       const roundedupperLimitX = Math.ceil(this.upperLimitX/100)*100;
      
       for(let x = roundedlowerLimitX ; x < roundedupperLimitX; x+=(roundedupperLimitX-roundedlowerLimitX)/this.numGrids){ // numbering
-        context.font= this.fontSize+'px sans-serif';
+        graphContext.font= this.fontSize+'px sans-serif';
         
-        context.fillText(x, x, -1);
+        graphContext.fillText(x, x, -1);
         
       }
   
@@ -167,20 +171,20 @@ let canvasWidth;
       console.log(this.lowerLimitY);
       
       for(let y = roundedlowerLimitY ; y < roundedupperLimitY; y+=(roundedupperLimitY-roundedlowerLimitY)/this.numGrids){ // numbering
-        context.font= this.fontSize+'px sans-serif';
+        graphContext.font= this.fontSize+'px sans-serif';
         
-        context.fillText(y, 1, -y);
+        graphContext.fillText(y, 1, -y);
         
       }
       
-      context.restore();
+      graphContext.restore();
       
 
     },
     ShiftGraph: function(shiftByX,shiftByY){ 
 
 
-      context.transform(1, 0, 0, 1, shiftByX, shiftByY);
+      graphContext.transform(1, 0, 0, 1, shiftByX, shiftByY);
       this.upperLimitX-=shiftByX;
       this.lowerLimitX-=shiftByX;
       this.upperLimitY-=shiftByY;
@@ -200,11 +204,19 @@ let canvasWidth;
 let gameObjects = [];
 let secondsPassed = 0;
 let oldTimeStamp = 0;
+
 function start(){
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  canvasHeight = canvas.height
-  canvasWidth = canvas.width
+  // graph canvas size initialization
+  graphCanvas.width = window.innerWidth;
+  graphCanvas.height = window.innerHeight;
+  graphCanvasHeight = graphCanvas.height;
+  graphCanvasWidth = graphCanvas.width;
+
+  //game canvas size initialization
+  gameCanvas.width = window.innerWidth;
+  gameCanvas.height = window.innerHeight;
+  gameCanvasHeight = gameCanvas.height;
+  gameCanvasWidth = gameCanvas.width;
   graphObject.Setup();
   window.requestAnimationFrame(gameLoop);
 }
@@ -214,26 +226,40 @@ function gameLoop(timeStamp){
   secondsPassed = (timeStamp-oldTimeStamp) /1000;
   oldTimeStamp = timeStamp;
   
-  // gravity
-  gameObjects.forEach(obj => {
-    obj.y +=1;
-});
+  // Move forward in time with a maximum amount of 0.1s
+secondsPassed = Math.min(secondsPassed, 0.1);
 
-  // draws each object
-  gameObjects.forEach(obj => {
-    obj.draw();
-});
-  
+  fixedUpdate(secondsPassed);
+  draw();
+
   window.requestAnimationFrame(gameLoop);
 }
 
+function fixedUpdate(secondsPassed){
+
+    // gravity
+    gameObjects.forEach(obj => {
+      obj.update();
+    });
+  
+
+}
+
+function draw(){  // redraws each object
+
+  gameContext.clearRect(0, 0, gameCanvasWidth, gameCanvasHeight);
+  gameObjects.forEach(obj => {
+    obj.draw();
+  });
+
+}
 
 
 
 
 class Gameobject {
   constructor(context,x,y,vx,vy){
-      context = context;
+      this.context = context;
       this.x = x;
       this.y = y;
       this.vx = vx;
@@ -244,22 +270,31 @@ class Gameobject {
 }
 class Car extends Gameobject {
 
-  constructor(context,x,y,vx,vy){
-      super(context,x,y,vx,vy);
-  }
+  static width = 50;
+  static height = 50;
+
+
   draw(){
-      context.clearRect(0, 0, canvasWidth, canvasHeight);
-      
-      context.fillRect(this.x, this.y, 500, 500);
+    this.context.fillStyle = this.isColliding?'#ff8080':'#0099b0';
+      this.context.fillRect(this.x, this.y, Car.width, Car.height);
   }
   update(){
-    this.y += 1 * secondsPassed;
+    this.x += this.vx * secondsPassed;
+    this.y += this.vy * secondsPassed;
   }
 }
-new Car();
+
 
 //#endregion
+//#region Levels
 
+function testingLevel(){
+  gameObjects = [
+    new Car(gameContext,50,50,50,50)
+  ]
+}
+
+//#endregion
 //#region React components
   class GraphAction extends React.Component{ // any button 
     
@@ -325,3 +360,4 @@ new Car();
 ReactDOM.render(<App />,document.getElementById("evaluate"));
 //#endregion
 window.onload = start();
+testingLevel();
