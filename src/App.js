@@ -227,9 +227,12 @@ function gameLoop(timeStamp){
   oldTimeStamp = timeStamp;
   
   // Move forward in time with a maximum amount of 0.1s
-secondsPassed = Math.min(secondsPassed, 0.1);
+  secondsPassed = Math.min(secondsPassed, 0.1);
 
   fixedUpdate(secondsPassed);
+
+  collisionDetection();
+
   draw();
 
   window.requestAnimationFrame(gameLoop);
@@ -237,12 +240,53 @@ secondsPassed = Math.min(secondsPassed, 0.1);
 
 function fixedUpdate(secondsPassed){
 
-    // gravity
+    // moves objects according to their velocities
     gameObjects.forEach(obj => {
-      obj.update();
+      obj.update(secondsPassed);
     });
   
 
+}
+
+function collisionDetection(){ // checks if any gameobjects are colliding
+  
+  let obj1;
+  let obj2;
+
+  // reset isColliding
+  for (let i = 0; i < gameObjects.length; i++) {
+    gameObjects[i].isColliding = false;
+  }
+
+  // looking for collisions
+  for(let i = 0; i < gameObjects.length; i++){
+
+    obj1 = gameObjects[i];
+    for(let j = i + 1; j < gameObjects.length; j++){ // j will skip all previously checked collisions
+
+      obj2 = gameObjects[j];
+
+      //comparing obj1 with obj2
+      if(rectIntersect(obj1.x,obj1.y,obj1.width,obj1.height,obj2.x,obj2.y,obj2.width,obj2.height)){
+        obj1.isColliding = true;
+        obj2.isColliding = true;
+        console.log(obj1.width);
+        console.log(obj2.width);
+        
+      }
+
+    }
+  
+  }
+
+}
+
+function rectIntersect(x1, y1, w1, h1, x2, y2, w2, h2){ // checks if rectangles are overlapping - must be updated for rotation
+  if(x2 > w1 + x1 || x1 > w2 + x2 || y2 > h1 + y1 || y1 > h2 + y2){  
+    return false;
+  }
+ 
+  return true;
 }
 
 function draw(){  // redraws each object
@@ -253,6 +297,8 @@ function draw(){  // redraws each object
   });
 
 }
+
+
 
 
 
@@ -270,17 +316,21 @@ class Gameobject {
 }
 class Car extends Gameobject {
 
-  static width = 50;
-  static height = 50;
-
+  constructor(context,x,y,vx,vy,width,height){
+    super(context,x,y,vx,vy)
+    this.width = width;
+    this.height = height;
+  }
+  
 
   draw(){
     this.context.fillStyle = this.isColliding?'#ff8080':'#0099b0';
-      this.context.fillRect(this.x, this.y, Car.width, Car.height);
+      this.context.fillRect(this.x, this.y, this.width, this.height);
   }
-  update(){
-    this.x += this.vx * secondsPassed;
-    this.y += this.vy * secondsPassed;
+
+  update(secondsPassed){
+    this.x += (this.vx * secondsPassed);
+    this.y += (this.vy * secondsPassed);
   }
 }
 
@@ -290,7 +340,8 @@ class Car extends Gameobject {
 
 function testingLevel(){
   gameObjects = [
-    new Car(gameContext,50,50,50,50)
+    new Car(gameContext,200,50,-50,0,50,50),
+    new Car(gameContext,50,50,0,0,100,50)
   ]
 }
 
