@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from "react-dom";
 import './App.css';
-import {evaluate} from 'mathjs';
+import {compareDependencies, evaluate} from 'mathjs';
 
 const graphCanvas = document.getElementById("graphCanvas");
 const graphContext = graphCanvas.getContext("2d");
@@ -168,7 +168,7 @@ let gameCanvasWidth;
   
       const roundedlowerLimitY = Math.floor(this.lowerLimitY/100)*100; // numbering
       const roundedupperLimitY = Math.ceil(this.upperLimitY/100)*100;
-      console.log(this.lowerLimitY);
+      
       
       for(let y = roundedlowerLimitY ; y < roundedupperLimitY; y+=(roundedupperLimitY-roundedlowerLimitY)/this.numGrids){ // numbering
         graphContext.font= this.fontSize+'px sans-serif';
@@ -218,6 +218,8 @@ function start(){
   gameCanvasHeight = gameCanvas.height;
   gameCanvasWidth = gameCanvas.width;
   graphObject.Setup();
+  graphObject.expression = "x";
+  graphObject.GraphCalculator();
   window.requestAnimationFrame(gameLoop);
 }
 // gameloop
@@ -231,7 +233,7 @@ function gameLoop(timeStamp){
 
   fixedUpdate(secondsPassed);
 
-  collisionDetection();
+  collisionDetection(gameObjects[0]);
 
   draw();
 
@@ -247,12 +249,33 @@ function fixedUpdate(secondsPassed){
   
 
 }
-
-function collisionDetection(){ // checks if any gameobjects are colliding
+function graphCollsionDetection(car){
   
+  if(graphContext.getImageData(car.x,car.y,1,1).data[3] !== 0){
+    console.log("rewvers")
+    
+    car.vy =-1;
+    car.gravity = false;
+  }else{
+    car.gravity = true;
+  }
+
+}
+
+function collisionDetection(car){ // checks if any non car gameobjects are colliding
+  //#region graph collision
+  graphCollsionDetection(car)
+
+  //#endregion
+  //#region interobject collision
+
+  if(gameObjects.length > 1){ // check if interobject collision detection is necessary
+    return;
+  } 
+
   let obj1;
   let obj2;
-
+  
   // reset isColliding
   for (let i = 0; i < gameObjects.length; i++) {
     gameObjects[i].isColliding = false;
@@ -270,15 +293,29 @@ function collisionDetection(){ // checks if any gameobjects are colliding
       if(rectIntersect(obj1.x,obj1.y,obj1.width,obj1.height,obj2.x,obj2.y,obj2.width,obj2.height)){
         obj1.isColliding = true;
         obj2.isColliding = true;
-        console.log(obj1.width);
-        console.log(obj2.width);
-        
+
+        let vCollision = {x: obj2.x - obj1.x, y: obj2.y - obj1.y}; // collision vector, with direction and distance between both objects
+        let distance = Math.sqrt((obj2.x-obj1.x)*(obj2.x-obj1.x) + (obj2.y-obj1.y)*(obj2.y-obj1.y));
+
+        let vCollisionUnit = {x: vCollision.x / distance, y: vCollision.y / distance};
+        let vRelativeVelocity = {x: obj1.vx - obj2.vx, y: obj1.vy -obj2.vy};
+        let speed = vRelativeVelocity.x * vCollisionUnit.x + vRelativeVelocity.y * vCollisionUnit.y; // dot productt of relative velocity and position vector
+
+        if(speed < 0){
+          break;
+        }
+        let impulse = 2 * speed / (obj1.mass + obj2.mass);    // adds velocities based on mass and speed
+        obj1.vx -= (impulse * obj2.mass * vCollisionUnit.x);
+        obj1.vy -= (impulse * obj2.mass * vCollisionUnit.y);
+        obj2.vx += (impulse * obj1.mass * vCollisionUnit.x);
+        obj2.vy += (impulse * obj1.mass * vCollisionUnit.y);
+
       }
 
     }
   
   }
-
+  //#endregion
 }
 
 function rectIntersect(x1, y1, w1, h1, x2, y2, w2, h2){ // checks if rectangles are overlapping - must be updated for rotation
@@ -304,20 +341,29 @@ function draw(){  // redraws each object
 
 
 class Gameobject {
-  constructor(context,x,y,vx,vy){
+  constructor(context,x,y,vx,vy,mass,gravity){
       this.context = context;
       this.x = x;
       this.y = y;
       this.vx = vx;
       this.vy = vy;
       this.isColliding = false;
+      this.mass = mass;
+      this.gravity = gravity;
+  }
+  update(secondsPassed){
+    if(this.gravity === true){
+      this.vy += 100*secondsPassed
+    }
+    this.x += (this.vx * secondsPassed);
+    this.y += (this.vy * secondsPassed);
   }
 
 }
 class Car extends Gameobject {
 
-  constructor(context,x,y,vx,vy,width,height){
-    super(context,x,y,vx,vy)
+  constructor(context,x,y,vx,vy,width,height,mass){
+    super(context,x,y,vx,vy,mass)
     this.width = width;
     this.height = height;
   }
@@ -329,8 +375,14 @@ class Car extends Gameobject {
   }
 
   update(secondsPassed){
-    this.x += (this.vx * secondsPassed);
-    this.y += (this.vy * secondsPassed);
+    super.update(secondsPassed);
+    collisionDetection(this);
+    // this code would get the angle of the object - implement later for rotating textures
+    // Calculate the angle (vy before vx)
+    //let radians = Math.atan2(this.vy, this.vx);
+
+    // Convert to degrees
+    //let degrees = 180 * radians / Math.PI;
   }
 }
 
@@ -340,8 +392,8 @@ class Car extends Gameobject {
 
 function testingLevel(){
   gameObjects = [
-    new Car(gameContext,200,50,-50,0,50,50),
-    new Car(gameContext,50,50,0,0,100,50)
+    new Car(gameContext,gameCanvasWidth/2,gameCanvasHeight/10,0,0,50,50,10),
+   
   ]
 }
 
