@@ -1,16 +1,13 @@
 import React from 'react';
 import ReactDOM from "react-dom";
 import './App.css';
-import {compareDependencies, evaluate} from 'mathjs';
+import {evaluate} from 'mathjs';
 
 const graphCanvas = document.getElementById("graphCanvas");
 const graphContext = graphCanvas.getContext("2d");
-const gameCanvas = document.getElementById("gameCanvas")
-const gameContext = gameCanvas.getContext("2d");
+
 let graphCanvasHeight;
 let graphCanvasWidth;
-let gameCanvasHeight;
-let gameCanvasWidth;
 //#region Graph Actions
   let graphObject = { // main object, with all graphCanvas manipulation methods
    
@@ -100,26 +97,24 @@ let gameCanvasWidth;
         return false;
       }
     },
-    GraphCalculator: function() { // everything to do with drawing on the graphCanvas
-     if(this.ExpressionValidifier() === true){
-      this.Clear();
+    GraphCalculator: function() { // drawing your own graphs
+      this.ClearAll();
+      this.DrawAxes();
+      if(this.ExpressionValidifier() === true){
+        graphContext.beginPath(); // graph
+        graphContext.moveTo(this.lowerLimitX,this.calculate(this.lowerLimitX));
       
-     this.DrawAxes();
-      
-     graphContext.beginPath(); // graph
-     graphContext.moveTo(this.lowerLimitX,this.calculate(this.lowerLimitX));
-      
-     for(let i = this.lowerLimitX ; i < this.upperLimitX ; i+= this.pointInterval){
-       const value = this.calculate(i);
-       if(value < this.upperLimitY && value > this.lowerLimitY){
-        graphContext.lineTo(i,value);
-       }
+        for(let i = this.lowerLimitX ; i < this.upperLimitX ; i+= this.pointInterval){
+          const value = this.calculate(i);
+          if(value < this.upperLimitY && value > this.lowerLimitY){
+            graphContext.lineTo(i,value);
+          }
          
+        }
+        graphContext.stroke();
       }
-      graphContext.stroke();
-    }
-     }
-     ,
+    },
+     
     
     Scale: function(ratio){ 
       
@@ -133,15 +128,16 @@ let gameCanvasWidth;
       this.GraphCalculator();
       
     },
-    Clear: function(){
+    ClearAll: function(){
       graphContext.save();
       graphContext.setTransform(1,0,0,1,0,0);
       graphContext.clearRect(0,0,graphCanvasWidth,graphCanvasHeight);
       graphContext.restore();
-  
-      
-      
-      
+    
+    },
+    Clear: function(){
+      this.expression = "";
+      this.GraphCalculator();
     },
     DrawAxes : function(){
 
@@ -200,239 +196,36 @@ let gameCanvasWidth;
 
 //#endregion
  
-//#region Game Loop
-let gameObjects = [];
-let secondsPassed = 0;
-let oldTimeStamp = 0;
-
-function start(){
-  // graph canvas size initialization
-  graphCanvas.width = window.innerWidth;
-  graphCanvas.height = window.innerHeight;
-  graphCanvasHeight = graphCanvas.height;
-  graphCanvasWidth = graphCanvas.width;
-
-  //game canvas size initialization
-  gameCanvas.width = window.innerWidth;
-  gameCanvas.height = window.innerHeight;
-  gameCanvasHeight = gameCanvas.height;
-  gameCanvasWidth = gameCanvas.width;
-  graphObject.Setup();
-  graphObject.expression = "x";
-  graphObject.GraphCalculator();
-  window.requestAnimationFrame(gameLoop);
-}
-// gameloop
-
-function gameLoop(timeStamp){
-  secondsPassed = (timeStamp-oldTimeStamp) /1000;
-  oldTimeStamp = timeStamp;
-  
-  // Move forward in time with a maximum amount of 0.1s
-  secondsPassed = Math.min(secondsPassed, 0.1);
-
-  fixedUpdate(secondsPassed);
-
-  collisionDetection(gameObjects[0]);
-
-  draw();
-
-  window.requestAnimationFrame(gameLoop);
-}
-
-function fixedUpdate(secondsPassed){
-
-    // moves objects according to their velocities
-    gameObjects.forEach(obj => {
-      obj.update(secondsPassed);
-    });
-  
-
-}
-function graphCollsionDetection(car){
-  
-  if(graphContext.getImageData(car.x,car.y,1,1).data[3] !== 0){
-    console.log("rewvers")
-    
-    car.vy =-1;
-    car.gravity = false;
-  }else{
-    car.gravity = true;
-  }
-
-}
-
-function collisionDetection(car){ // checks if any non car gameobjects are colliding
-  //#region graph collision
-  graphCollsionDetection(car)
-
-  //#endregion
-  //#region interobject collision
-
-  if(gameObjects.length > 1){ // check if interobject collision detection is necessary
-    return;
-  } 
-
-  let obj1;
-  let obj2;
-  
-  // reset isColliding
-  for (let i = 0; i < gameObjects.length; i++) {
-    gameObjects[i].isColliding = false;
-  }
-
-  // looking for collisions
-  for(let i = 0; i < gameObjects.length; i++){
-
-    obj1 = gameObjects[i];
-    for(let j = i + 1; j < gameObjects.length; j++){ // j will skip all previously checked collisions
-
-      obj2 = gameObjects[j];
-
-      //comparing obj1 with obj2
-      if(rectIntersect(obj1.x,obj1.y,obj1.width,obj1.height,obj2.x,obj2.y,obj2.width,obj2.height)){
-        obj1.isColliding = true;
-        obj2.isColliding = true;
-
-        let vCollision = {x: obj2.x - obj1.x, y: obj2.y - obj1.y}; // collision vector, with direction and distance between both objects
-        let distance = Math.sqrt((obj2.x-obj1.x)*(obj2.x-obj1.x) + (obj2.y-obj1.y)*(obj2.y-obj1.y));
-
-        let vCollisionUnit = {x: vCollision.x / distance, y: vCollision.y / distance};
-        let vRelativeVelocity = {x: obj1.vx - obj2.vx, y: obj1.vy -obj2.vy};
-        let speed = vRelativeVelocity.x * vCollisionUnit.x + vRelativeVelocity.y * vCollisionUnit.y; // dot productt of relative velocity and position vector
-
-        if(speed < 0){
-          break;
-        }
-        let impulse = 2 * speed / (obj1.mass + obj2.mass);    // adds velocities based on mass and speed
-        obj1.vx -= (impulse * obj2.mass * vCollisionUnit.x);
-        obj1.vy -= (impulse * obj2.mass * vCollisionUnit.y);
-        obj2.vx += (impulse * obj1.mass * vCollisionUnit.x);
-        obj2.vy += (impulse * obj1.mass * vCollisionUnit.y);
-
-      }
-
-    }
-  
-  }
-  //#endregion
-}
-
-function rectIntersect(x1, y1, w1, h1, x2, y2, w2, h2){ // checks if rectangles are overlapping - must be updated for rotation
-  if(x2 > w1 + x1 || x1 > w2 + x2 || y2 > h1 + y1 || y1 > h2 + y2){  
-    return false;
-  }
- 
-  return true;
-}
-
-function draw(){  // redraws each object
-
-  gameContext.clearRect(0, 0, gameCanvasWidth, gameCanvasHeight);
-  gameObjects.forEach(obj => {
-    obj.draw();
-  });
-
-}
 
 
 
-
-
-
-class Gameobject {
-  constructor(context,x,y,vx,vy,mass,gravity){
-      this.context = context;
-      this.x = x;
-      this.y = y;
-      this.vx = vx;
-      this.vy = vy;
-      this.isColliding = false;
-      this.mass = mass;
-      this.gravity = gravity;
-  }
-  update(secondsPassed){
-    if(this.gravity === true){
-      this.vy += 100*secondsPassed
-    }
-    this.x += (this.vx * secondsPassed);
-    this.y += (this.vy * secondsPassed);
-  }
-
-}
-class Car extends Gameobject {
-
-  constructor(context,x,y,vx,vy,width,height,mass){
-    super(context,x,y,vx,vy,mass)
-    this.width = width;
-    this.height = height;
-  }
-  
-
-  draw(){
-    this.context.fillStyle = this.isColliding?'#ff8080':'#0099b0';
-      this.context.fillRect(this.x, this.y, this.width, this.height);
-  }
-
-  update(secondsPassed){
-    super.update(secondsPassed);
-    collisionDetection(this);
-    // this code would get the angle of the object - implement later for rotating textures
-    // Calculate the angle (vy before vx)
-    //let radians = Math.atan2(this.vy, this.vx);
-
-    // Convert to degrees
-    //let degrees = 180 * radians / Math.PI;
-  }
-}
-
-
-//#endregion
-//#region Levels
-
-function testingLevel(){
-  gameObjects = [
-    new Car(gameContext,gameCanvasWidth/2,gameCanvasHeight/10,0,0,50,50,10),
-   
-  ]
-}
-
-//#endregion
 //#region React components
-  class GraphAction extends React.Component{ // any button 
-    
-    render(){
-      
-        switch(this.props.method){
 
-       
-          case "Evaluate":
-            return  <button onClick={() => graphObject.GraphCalculator()} >Evaluate</button>
-  
-          case "Clear":
-            return  <button onClick={() => graphObject.Clear()} >Clear</button>
-       
-          default:
-            return null;
-        }
-       }
-      
-    
-
-  }
-
-  class Input extends React.Component{ // where we type in the function
-   
+  class Input extends React.Component{ // where we type in the function and clear
+   constructor(){
+     super();
+     this.state ={text: ""};
+   }
     handleChange(e){
+     this.setState({text: e.target.value});
      graphObject.expression = e.target.value;
      graphObject.GraphCalculator();
+    }
+    handleClear(){
+      this.setState({text: ""});
+      graphObject.Clear();
     }
 
     render(){
       return(
         <div>
-          <input onChange={this.handleChange.bind(this)} type="text" >
-          </input>
+          <div>
+            <input onChange={this.handleChange.bind(this)} type="text" value= {this.state.text}>
+            </input>
+          </div>
+          <div>
+            <button onClick={this.handleClear.bind(this)}>Clear</button>
+          </div>
         </div>
         
 
@@ -447,14 +240,7 @@ function testingLevel(){
         <div>
           <div>
             <Input/>
-          </div>
-          <div>
-             <GraphAction method ="Evaluate"/>
-            
-             <GraphAction method ="Clear"/>
-           
-          </div>
-    
+          </div>    
         </div>
       )
     }
@@ -462,5 +248,18 @@ function testingLevel(){
 
 ReactDOM.render(<App />,document.getElementById("evaluate"));
 //#endregion
+function start(){
+  // graph canvas size initialization
+  graphCanvas.width = window.innerWidth * 0.8;
+  graphCanvas.height = window.innerHeight * 0.8;
+  graphCanvasHeight = graphCanvas.height;
+  graphCanvasWidth = graphCanvas.width;
+
+  graphObject.Setup();
+  
+  graphObject.DrawAxes();
+ 
+}
+
+
 window.onload = start();
-testingLevel();
