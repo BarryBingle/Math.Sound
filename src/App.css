@@ -1,0 +1,16 @@
+.sliderTrack{
+    width: 100%;
+    height: 25px;
+    
+}
+.sliderThumb{
+    color: black;
+    background-color: slategrey;
+
+}
+.horizontal-slider{
+    width: 100%;
+    height: 25px;
+    background-color: grey;
+}
+    
