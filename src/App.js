@@ -19,10 +19,14 @@ let graphCanvasWidth;
       this.lowerLimitX =-graphCanvasWidth/2;
       this.upperLimitY = graphCanvasHeight/2;
       this.lowerLimitY =-graphCanvasHeight/2;
+      if(this.lowerLimitX < -1000 &&this.upperLimitX > 1000){
+        this.Scale(this.upperLimitX / 1000)
+      }
       graphContext.setTransform(1, 0, 0, -1, graphCanvasWidth/2,graphCanvasHeight/2); // inverts y-axis in order to increase as you move further up as in the cartesian plane
       
       this.numGrids = 10; // number of grid markings
-      this.pointInterval = 2; // changes for balance of smoothness of line with time to compute, increase with more zoom decrease with less zoom
+      this.pointInterval = 5; // changes for balance of smoothness of line with time to compute, increase with more zoom decrease with less zoom
+      this.zoomRatio = 1; // each pixel equals one unit at the start
       this.expressions = ["",];
       this.expressionDomains = [[-1000,1000]];
       this.fontSize = 10;
@@ -44,7 +48,7 @@ let graphCanvasWidth;
         })
       graphCanvas.addEventListener("mousemove", function(event){
         if(this.dragging === true){
-          graphObject.ShiftGraph(event.clientX- this.dragCoords.x ,this.dragCoords.y - event.clientY); 
+          graphObject.ShiftGraph(event.clientX - this.dragCoords.x,(this.dragCoords.y - event.clientY) ); 
 
         }
         this.dragCoords ={
@@ -114,15 +118,29 @@ let graphCanvasWidth;
       this.DrawAxes();
      
       for(let z = 0;z<this.expressions.length;z++){
+        let curExpression =this.expressions[z];
+        
         if(this.ExpressionValidifier(this.expressions[z]) === true){
           graphContext.beginPath();
-          graphContext.moveTo(this.expressionDomains[z][0],this.calculate(this.expressionDomains[z][0],this.expressions[z]));
-        
-          for(let i = this.expressionDomains[z][0] ; i < this.expressionDomains[z][1] ; i+= this.pointInterval){
-            const value = this.calculate(i,this.expressions[z]);
-            if(value < this.upperLimitY && value > this.lowerLimitY){ // look at this again
-              graphContext.lineTo(i,value);
+          graphContext.moveTo(this.expressionDomains[z][0],this.calculate(this.expressionDomains[z][0],curExpression));
+
+            let lowerLimitOfLoop;
+            let upperLimitOfLoop;
+            if(this.expressionDomains[z][0] > this.lowerLimitX){ // checks if domain or edge of canvas is closer and sets it to the limits of the loop
+              lowerLimitOfLoop = this.expressionDomains[z][0];
+            }else{
+              lowerLimitOfLoop = this.lowerLimitX;
             }
+            if(this.expressionDomains[z][1] < this.upperLimitX){
+              upperLimitOfLoop = this.expressionDomains[z][1];
+            }else{
+              upperLimitOfLoop = this.upperLimitX;
+            }
+
+          for(let i = lowerLimitOfLoop ; i < upperLimitOfLoop ; i+= this.pointInterval){
+            graphContext.lineTo(i,this.calculate(i,curExpression));
+            //console.log("bababooey")
+            
           }
 
           graphContext.stroke();
@@ -133,15 +151,22 @@ let graphCanvasWidth;
     },
      
     
-    Scale: function(ratio){ 
-      
+    Scale: function(ratio){  // urgent fix
+      if(this.upperLimitX * ratio > 1000){
+        ratio = 1000/this.upperLimitX
+      }
+      if(this.lowerLimitX * ratio < -1000){
+        ratio = -1000/this.lowerLimitX
+      }
+      this.pointInterval *=ratio;
+      this.zoomRatio *=ratio;
       this.fontSize*=ratio;
       graphContext.scale(1/ratio,1/ratio);
-      this.lowerLimitX*=ratio;
-      this.upperLimitX*=ratio;
-      this.lowerLimitY*=ratio;
-      this.upperLimitY*=ratio;
-      this.pointInterval *=ratio;
+      this.lowerLimitX *=ratio;
+      
+      this.upperLimitX *=ratio;
+      this.lowerLimitY *=ratio;
+      this.upperLimitY *=ratio;
       this.GraphCalculator();
       
     },
@@ -193,7 +218,16 @@ let graphCanvasWidth;
 
     },
     ShiftGraph: function(shiftByX,shiftByY){ 
-
+      
+      shiftByX*=this.zoomRatio;
+      shiftByY*=this.zoomRatio;
+      if(this.upperLimitX-shiftByX > 1000){
+        shiftByX = 1000-this.upperLimitX
+      }
+      if(this.lowerLimitX-shiftByX < -1000){
+        shiftByX = -1000-this.lowerLimitX
+      }
+      //console.log((this.upperLimitX - this.lowerLimitX) /this.pointInterval)
 
       graphContext.transform(1, 0, 0, 1, shiftByX, shiftByY);
       this.upperLimitX-=shiftByX;
@@ -237,7 +271,7 @@ let timingGraphObject = {
     
     this.beat++;
     let timerBarPosition = Math.round(graphObject.lowerLimitX + (graphObject.upperLimitX-graphObject.lowerLimitX)/this.beatsPerScreen*(this.beat-1))
-    console.log(timerBarPosition);
+    
     for(let i = 0; i <this.audioSources.length; i++){
       if(graphObject.ExpressionValidifier(graphObject.expressions[i]) === true && timerBarPosition >= graphObject.expressionDomains[i][0] && timerBarPosition <= graphObject.expressionDomains[i][1]){
         
@@ -283,7 +317,7 @@ class audioSource{
     }
   changeAudioType(newAudioType){
 
-    console.log(newAudioType);
+    //console.log(newAudioType);
     this.osc.type = newAudioType;
   }
   
@@ -310,7 +344,7 @@ class audioSource{
       graphObject.expressionDomains.splice(idIndex +1,0,[-1000,1000]) // sets domain at -1000,1000 to start
       timingGraphObject.audioSources.splice(idIndex +1,0,new audioSource(audioCtx))
       this.setState({components: prevState});
-      console.log(this.state.components)
+      //console.log(this.state.components)
     }
 
     delete(id){
@@ -321,7 +355,7 @@ class audioSource{
       timingGraphObject.audioSources.splice(idIndex,1);
       graphObject.expressionDomains.splice(idIndex,1)
       this.setState({components: prevState});
-      console.log(this.state.components);
+      //console.log(this.state.components);
       graphObject.GraphCalculator();
     }
     changeAudioType(id,newAudioType){
@@ -332,7 +366,7 @@ class audioSource{
     changeDomain(id,newValue){
       let idIndex = this.state.components.findIndex(el => el === id);
       graphObject.expressionDomains.splice(idIndex,1,newValue);
-      console.log(graphObject.expressionDomains)
+      graphObject.GraphCalculator();
 
     }
 
@@ -371,10 +405,10 @@ class audioSource{
     handleAudiotypeChange(id){
       let newAudioType = document.getElementById(id + "audioType").value;
       this.props.changeAudioTypeFunction(id,newAudioType);
-      console.log(id,newAudioType)
+      //console.log(id,newAudioType)
     }
     handleChangeDomain(id,newValue){
-      console.log(12)
+      
       this.props.changeDomainFunction(id,newValue);
       
     }
