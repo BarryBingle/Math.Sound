@@ -11,6 +11,8 @@ const graphContext = graphCanvas.getContext("2d");
 let graphCanvasHeight;
 let graphCanvasWidth;
 
+
+
   let graphObject = { // main object, with all graphCanvas manipulation methods
    
     Setup: function(){
@@ -19,17 +21,15 @@ let graphCanvasWidth;
       this.lowerLimitX =-graphCanvasWidth/2;
       this.upperLimitY = graphCanvasHeight/2;
       this.lowerLimitY =-graphCanvasHeight/2;
-      if(this.lowerLimitX < -1000 &&this.upperLimitX > 1000){
-        this.Scale(this.upperLimitX / 1000)
-      }
-      graphContext.setTransform(1, 0, 0, -1, graphCanvasWidth/2,graphCanvasHeight/2); // inverts y-axis in order to increase as you move further up as in the cartesian plane
-      
-      this.numGrids = 10; // number of grid markings
-      this.pointInterval = 5; // changes for balance of smoothness of line with time to compute, increase with more zoom decrease with less zoom
+     
+      this.numGrids = 20; // number of grid markings
+      this.pointInterval = 2; // changes for balance of smoothness of line with time to compute, increase with more zoom decrease with less zoom
       this.zoomRatio = 1; // each pixel equals one unit at the start
-      this.expressions = ["",];
-      this.expressionDomains = [[-1000,1000]];
+      this.expressions = [{expr: "",domain:[-1000,1000],colour: "#000000"},]; // array of objects that gets all info about a certain expression colour, value and domains. Initialised with empty graph
       this.fontSize = 10;
+      
+     
+      graphContext.setTransform(1, 0, 0, -1, graphCanvasWidth/2,graphCanvasHeight/2); // inverts y-axis in order to increase as you move further up as in the cartesian plane
       
 
      this.dragCoords = {
@@ -81,11 +81,16 @@ let graphCanvasWidth;
       })
       
     },
+    ChangeDefaultScaling(){
+      if(this.lowerLimitX < -200 &&this.upperLimitX > 200){
+        this.Scale(400/(Math.abs(this.upperLimitX) + Math.abs(this.lowerLimitX)))
+      }
+    },
     ExpressionValidifier(exp){ // checks expression before making calculations to avoid wasting resources
       
       
         try {
-          if(typeof(evaluate(exp,{x: 1})) != "number"){
+          if(typeof(evaluate(exp,{x: 1})) != "number"){ // todo fix if assymtote =1
             console.log("NaN error")
             return false;
           }
@@ -116,30 +121,34 @@ let graphCanvasWidth;
     GraphCalculator: function() { // drawing your own graphs
       this.ClearAll();
       this.DrawAxes();
-     
+      
       for(let z = 0;z<this.expressions.length;z++){
-        let curExpression =this.expressions[z];
-        
-        if(this.ExpressionValidifier(this.expressions[z]) === true){
+        let curExpression =this.expressions[z].expr;
+        if(this.ExpressionValidifier(this.expressions[z].expr) === true){
           graphContext.beginPath();
-          graphContext.moveTo(this.expressionDomains[z][0],this.calculate(this.expressionDomains[z][0],curExpression));
+          graphContext.strokeStyle = this.expressions[z].colour;
+          graphContext.moveTo(this.expressions[z].domain[0],this.calculate(this.expressions[z].domain[0],curExpression));
 
             let lowerLimitOfLoop;
             let upperLimitOfLoop;
-            if(this.expressionDomains[z][0] > this.lowerLimitX){ // checks if domain or edge of canvas is closer and sets it to the limits of the loop
-              lowerLimitOfLoop = this.expressionDomains[z][0];
+            if(this.expressions[z].domain[0] > this.lowerLimitX){ // checks if domain or edge of canvas is closer and sets it to the limits of the loop
+              lowerLimitOfLoop = this.expressions[z].domain[0];
             }else{
               lowerLimitOfLoop = this.lowerLimitX;
             }
-            if(this.expressionDomains[z][1] < this.upperLimitX){
-              upperLimitOfLoop = this.expressionDomains[z][1];
+            if(this.expressions[z].domain[1] < this.upperLimitX){
+              upperLimitOfLoop = this.expressions[z].domain[1];
             }else{
               upperLimitOfLoop = this.upperLimitX;
             }
 
           for(let i = lowerLimitOfLoop ; i < upperLimitOfLoop ; i+= this.pointInterval){
+            
+            
             graphContext.lineTo(i,this.calculate(i,curExpression));
-            //console.log("bababooey")
+
+            
+            
             
           }
 
@@ -151,7 +160,7 @@ let graphCanvasWidth;
     },
      
     
-    Scale: function(ratio){  // urgent fix
+    Scale: function(ratio){ 
       if(this.upperLimitX * ratio > 1000){
         ratio = 1000/this.upperLimitX
       }
@@ -183,6 +192,7 @@ let graphCanvasWidth;
     DrawAxes : function(){
       
       graphContext.beginPath(); // axes
+      graphContext.strokeStyle = "#000000"
       graphContext.moveTo(this.lowerLimitX,0);
       graphContext.lineTo(this.upperLimitX,0);
 
@@ -227,7 +237,7 @@ let graphCanvasWidth;
       if(this.lowerLimitX-shiftByX < -1000){
         shiftByX = -1000-this.lowerLimitX
       }
-      //console.log((this.upperLimitX - this.lowerLimitX) /this.pointInterval)
+      
 
       graphContext.transform(1, 0, 0, 1, shiftByX, shiftByY);
       this.upperLimitX-=shiftByX;
@@ -240,6 +250,15 @@ let graphCanvasWidth;
     },
     
     
+  }
+
+  class expression{
+    constructor(expr,domain,colour){
+      this.expr = expr;
+      this.domain = domain
+      this.colour = colour
+      }
+  
   }
 //#endregion
 
@@ -255,10 +274,11 @@ let timingGraphObject = {
     this.timeBetweenBeats = 1000; // in milliseconds
     this.beat = 1;
     this.audioSources = [new audioSource(audioCtx,"sine")]; // default first instrument/graph
+    this.timer = 0;
   },
   MoveTimerBar: function(){
   
-    
+      
     if(this.beat >= this.beatsPerScreen){
       this.beat = 1;
     }
@@ -273,13 +293,28 @@ let timingGraphObject = {
     let timerBarPosition = Math.round(graphObject.lowerLimitX + (graphObject.upperLimitX-graphObject.lowerLimitX)/this.beatsPerScreen*(this.beat-1))
     
     for(let i = 0; i <this.audioSources.length; i++){
-      if(graphObject.ExpressionValidifier(graphObject.expressions[i]) === true && timerBarPosition >= graphObject.expressionDomains[i][0] && timerBarPosition <= graphObject.expressionDomains[i][1]){
+      if(graphObject.ExpressionValidifier(graphObject.expressions[i].expr) === true && timerBarPosition >= graphObject.expressions[i].domain[0] && timerBarPosition <= graphObject.expressions[i].domain[1]){
+        let newFreq =  graphObject.calculate(Math.round(graphObject.lowerLimitX + (graphObject.upperLimitX-graphObject.lowerLimitX)/this.beatsPerScreen*(this.beat-1)),graphObject.expressions[i].expr);
+        if(newFreq <= -24000){
+          this.audioSources[i].changeFrequency(-24000);
+        }
+        else if(newFreq >= 24000){
+          this.audioSources[i].changeFrequency(24000);
+
+        }
+        else if(isNaN(newFreq)=== false){
+          this.audioSources[i].changeFrequency(newFreq);
+
+        }
+        else{
+          this.audioSources[i].changeFrequency(0);
+
+        }
         
-        this.audioSources[i].changeFrequency( graphObject.calculate(Math.round(graphObject.lowerLimitX + (graphObject.upperLimitX-graphObject.lowerLimitX)/this.beatsPerScreen*(this.beat-1)),graphObject.expressions[i]));
         this.audioSources[i].play();
       }
     }
-    setTimeout(() => {
+    this.timer = setTimeout(() => {
       this.MoveTimerBar();
     }, this.timeBetweenBeats);
     
@@ -295,7 +330,7 @@ let timingGraphObject = {
 let audioCtx = null;
 
 class audioSource{
-  constructor(audioCtx){  // todo implement audiotype changes
+  constructor(audioCtx){  
     this.audioCtx = audioCtx;
     this.osc = audioCtx.createOscillator();
     this.g = audioCtx.createGain();
@@ -340,8 +375,7 @@ class audioSource{
       this.IDCount++;
       let idIndex = prevState.findIndex(el => el === id);
       prevState.splice(idIndex + 1,0,this.IDCount)
-      graphObject.expressions.splice(idIndex + 1,0,this.IDCount)
-      graphObject.expressionDomains.splice(idIndex +1,0,[-1000,1000]) // sets domain at -1000,1000 to start
+      graphObject.expressions.splice(idIndex + 1,0,new expression("",[-1000,1000],"#000000"))
       timingGraphObject.audioSources.splice(idIndex +1,0,new audioSource(audioCtx))
       this.setState({components: prevState});
       //console.log(this.state.components)
@@ -353,7 +387,6 @@ class audioSource{
       prevState.splice(idIndex,1);
       graphObject.expressions.splice(idIndex,1);
       timingGraphObject.audioSources.splice(idIndex,1);
-      graphObject.expressionDomains.splice(idIndex,1)
       this.setState({components: prevState});
       //console.log(this.state.components);
       graphObject.GraphCalculator();
@@ -365,16 +398,22 @@ class audioSource{
     }
     changeDomain(id,newValue){
       let idIndex = this.state.components.findIndex(el => el === id);
-      graphObject.expressionDomains.splice(idIndex,1,newValue);
+      graphObject.expressions[idIndex].domain = newValue;
       graphObject.GraphCalculator();
 
+    }
+    changeColour(id,newColour){
+      let idIndex = this.state.components.findIndex(el => el === id);
+      graphObject.expressions[idIndex].colour = newColour;
+      graphObject.GraphCalculator();
     }
 
     render(){
       return( 
         <div>
           <InputBox components = {this.state.components} deleteFunction = {this.delete.bind(this)}
-           createFunction = {this.create.bind(this)} changeAudioTypeFunction= {this.changeAudioType.bind(this)} changeDomainFunction={this.changeDomain.bind(this)}/>
+           createFunction = {this.create.bind(this)} changeAudioTypeFunction= {this.changeAudioType.bind(this)} changeDomainFunction={this.changeDomain.bind(this)}
+            changeColourFunction={this.changeColour.bind(this)}/>
 
         </div>
 
@@ -388,7 +427,7 @@ class audioSource{
     constructor(props){
       super(props)
       this.handleChangeDomain = this.handleChangeDomain.bind(this);
-      //this.handleDelete = this.handleDelete.bind(this);
+      this.handleChangeColour = this.handleChangeColour.bind(this);
       this.handleCreate = this.handleCreate.bind(this);
       this.handleAudiotypeChange = this.handleAudiotypeChange.bind(this);
 
@@ -405,12 +444,15 @@ class audioSource{
     handleAudiotypeChange(id){
       let newAudioType = document.getElementById(id + "audioType").value;
       this.props.changeAudioTypeFunction(id,newAudioType);
-      //console.log(id,newAudioType)
+      
     }
     handleChangeDomain(id,newValue){
       
       this.props.changeDomainFunction(id,newValue);
       
+    }
+    handleChangeColour(id,newColour){
+      this.props.changeColourFunction(id,newColour.target.value);
     }
     
 
@@ -449,7 +491,7 @@ class audioSource{
                   }
                 </div>
                 <div>
-                  <button onClick={this.handleCreate.bind(this,comp)}>New graph</button>
+                  <input type="color" onChange={this.handleChangeColour.bind(this,comp)}></input>
                 </div>
                
                 <div>
@@ -459,6 +501,10 @@ class audioSource{
                     <option value="sawtooth">Sawtooth</option>
                     <option value="triangle">Triangle</option>
                   </select>
+                </div>
+
+                <div>
+                  <button onClick={this.handleCreate.bind(this,comp)}>New graph</button>
                 </div>
                 
               </div>
@@ -483,7 +529,7 @@ class audioSource{
      handleChange(e){
       this.setState({text: e.target.value});
       let idIndex = this.props.components.findIndex(el => el === this.props.id);
-      graphObject.expressions.splice(idIndex,1,e.target.value)
+      graphObject.expressions[idIndex].expr = e.target.value;
       graphObject.GraphCalculator();
      }
      handleClear(){
@@ -582,9 +628,11 @@ class audioSource{
   }
 
 
+
 ReactDOM.render(<AllInputs/>,document.getElementById("InputBox"));
 ReactDOM.render(<Sliders/>,document.getElementById("Sliders"));
 ReactDOM.render(<MuteButton/>,document.getElementById("MuteButton"));
+
 
 
 
@@ -603,6 +651,7 @@ function start(){
   timingCanvas.height = window.innerHeight * 0.8;
 
   graphObject.Setup();
+  graphObject.ChangeDefaultScaling();
   graphObject.DrawAxes();
   timingGraphObject.Setup();
   timingGraphObject.MoveTimerBar();
