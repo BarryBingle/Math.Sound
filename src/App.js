@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from "react-dom";
 import './App.css';
-import {evaluate} from 'mathjs';
+
 import ReactSlider from 'react-slider';
 //#region Graph Actions
 
@@ -10,13 +10,14 @@ const graphContext = graphCanvas.getContext("2d");
 
 let graphCanvasHeight;
 let graphCanvasWidth;
+let math = require('mathjs-expression-parser');
 
 
 
   let graphObject = { // main object, with all graphCanvas manipulation methods
    
     Setup: function(){
-      this.expressionValidity = false;
+      
       this.upperLimitX = graphCanvasWidth/2;
       this.lowerLimitX =-graphCanvasWidth/2;
       this.upperLimitY = graphCanvasHeight/2;
@@ -25,7 +26,7 @@ let graphCanvasWidth;
       this.numGrids = 20; // number of grid markings
       this.pointInterval = 2; // changes for balance of smoothness of line with time to compute, increase with more zoom decrease with less zoom
       this.zoomRatio = 1; // each pixel equals one unit at the start
-      this.expressions = [{expr: "",domain:[-1000,1000],colour: "#000000"},]; // array of objects that gets all info about a certain expression colour, value and domains. Initialised with empty graph
+      this.expressions = [{expr: "",domain:[-1000,1000],colour: "#000000",verticalAsymptotes: null}]; // array of objects that gets all info about a certain expression colour, value and domains. Initialised with empty graph
       this.fontSize = 10;
       
      
@@ -86,22 +87,52 @@ let graphCanvasWidth;
         this.Scale(400/(Math.abs(this.upperLimitX) + Math.abs(this.lowerLimitX)))
       }
     },
-    ExpressionValidifier(exp){ // checks expression before making calculations to avoid wasting resources
+    ExpressionValidifier(exprText,idIndex){ // checks expression before making calculations to avoid wasting resources
+      graphObject.expressions[idIndex].validity = false;
+      let exprObject;
+
+      try { // first test is to try and parse the expression
+      exprObject = math.parse(exprText);
       
-      
-        try {
-          if(typeof(evaluate(exp,{x: 1})) != "number"){ // todo fix if assymtote =1
-            console.log("NaN error")
-            return false;
-          }
-        }
-       catch (error) {
-        console.log("parseError")
+      console.log(exprObject)
+      console.log(exprObject.toString())
+
+        
+      } catch (error) {
+        console.log("couldn't parse")
         return false;
+      } 
+       // second test is to see if all variables are x
+        
+        let symbolNodes = exprObject.filter(function (node) {
+          return node.isSymbolNode
+        })
+        // since symbolnodes are used for variables and functions, we must check that all symbolnodes are
+        // either x or a function
+        
+        if(symbolNodes.length >0){
+          
+          for(let i = 0; i<symbolNodes.length;i++){
+          
+            if(symbolNodes[i].name === 'x' || symbolNodes[i].name in math){
+              
+
+            }
+            else{
+              console.log("non acceptable symbolnode found")
+              return false;
+            }
+           
+        }
+
         }
       
+        
+        //tests passed, expression valid
+        
+        graphObject.expressions[idIndex].validity = true;
       
-      return true;
+      return true
        
 
     },
@@ -112,22 +143,29 @@ let graphCanvasWidth;
         x: input
       }
       
-      return evaluate(expression,scope);
+      return math.eval(expression,scope);
         
       
     }
     ,
+   
   
-    GraphCalculator: function() { // drawing your own graphs
+    GraphCalculator: function() { // drawing your own graphs - doesn't work well when asymptotes but oh well
       this.ClearAll();
       this.DrawAxes();
       
       for(let z = 0;z<this.expressions.length;z++){
+
         let curExpression =this.expressions[z].expr;
-        if(this.ExpressionValidifier(this.expressions[z].expr) === true){
+        if(this.expressions[z].validity === true){
+
           graphContext.beginPath();
           graphContext.strokeStyle = this.expressions[z].colour;
           graphContext.moveTo(this.expressions[z].domain[0],this.calculate(this.expressions[z].domain[0],curExpression));
+
+          let hasAsymptotes = false;
+          let asymptotesTravelled;
+          let numAsymtotes;
 
             let lowerLimitOfLoop;
             let upperLimitOfLoop;
@@ -142,13 +180,34 @@ let graphCanvasWidth;
               upperLimitOfLoop = this.upperLimitX;
             }
 
+
+            if(this.expressions[z].verticalAsymptotes != null){ // sets up assymtote crossing process
+              hasAsymptotes = true;
+              asymptotesTravelled = 0;  
+              numAsymtotes = this.expressions[z].verticalAsymptotes.length;
+              
+            }
+         
           for(let i = lowerLimitOfLoop ; i < upperLimitOfLoop ; i+= this.pointInterval){
             
-            
-            graphContext.lineTo(i,this.calculate(i,curExpression));
+            if(hasAsymptotes === true && i>=this.expressions[z].verticalAsymptotes[asymptotesTravelled]-0.001 && asymptotesTravelled < numAsymtotes){
+              graphContext.lineTo(this.expressions[z].verticalAsymptotes[asymptotesTravelled]-0.001,this.calculate(this.expressions[z].verticalAsymptotes[asymptotesTravelled]-0.001,curExpression));
+              graphContext.stroke();
+              graphContext.beginPath();
+              console.log(this.expressions[z].verticalAsymptotes[asymptotesTravelled])
+              i = this.expressions[z].verticalAsymptotes[asymptotesTravelled] + 0.001;
+              console.log(i)
+              graphContext.moveTo(i,this.calculate(i,curExpression));
+              console.log("crossed")
+              asymptotesTravelled++;
 
+            }
+           
+            graphContext.lineTo(i,this.calculate(i,curExpression));
+              
+          
             
-            
+
             
           }
 
@@ -186,7 +245,6 @@ let graphCanvasWidth;
       graphContext.restore();
     },
     Clear: function(){
-      this.expression = "";
       this.GraphCalculator();
     },
     DrawAxes : function(){
@@ -252,11 +310,12 @@ let graphCanvasWidth;
     
   }
 
-  class expression{
+  class expressionConstructor{
     constructor(expr,domain,colour){
       this.expr = expr;
       this.domain = domain
       this.colour = colour
+      this.verticalAsymptotes = null;
       }
   
   }
@@ -293,7 +352,7 @@ let timingGraphObject = {
     let timerBarPosition = Math.round(graphObject.lowerLimitX + (graphObject.upperLimitX-graphObject.lowerLimitX)/this.beatsPerScreen*(this.beat-1))
     
     for(let i = 0; i <this.audioSources.length; i++){
-      if(graphObject.ExpressionValidifier(graphObject.expressions[i].expr) === true && timerBarPosition >= graphObject.expressions[i].domain[0] && timerBarPosition <= graphObject.expressions[i].domain[1]){
+      if(graphObject.expressions[i].expr.validity === true && timerBarPosition >= graphObject.expressions[i].domain[0] && timerBarPosition <= graphObject.expressions[i].domain[1]){
         let newFreq =  graphObject.calculate(Math.round(graphObject.lowerLimitX + (graphObject.upperLimitX-graphObject.lowerLimitX)/this.beatsPerScreen*(this.beat-1)),graphObject.expressions[i].expr);
         if(newFreq <= -24000){
           this.audioSources[i].changeFrequency(-24000);
@@ -375,7 +434,7 @@ class audioSource{
       this.IDCount++;
       let idIndex = prevState.findIndex(el => el === id);
       prevState.splice(idIndex + 1,0,this.IDCount)
-      graphObject.expressions.splice(idIndex + 1,0,new expression("",[-1000,1000],"#000000"))
+      graphObject.expressions.splice(idIndex + 1,0,new expressionConstructor("",[-1000,1000],"#000000"))
       timingGraphObject.audioSources.splice(idIndex +1,0,new audioSource(audioCtx))
       this.setState({components: prevState});
       //console.log(this.state.components)
@@ -530,13 +589,17 @@ class audioSource{
       this.setState({text: e.target.value});
       let idIndex = this.props.components.findIndex(el => el === this.props.id);
       graphObject.expressions[idIndex].expr = e.target.value;
-      graphObject.GraphCalculator();
+      if(graphObject.ExpressionValidifier(e.target.value,idIndex) == true){
+        
+        graphObject.GraphCalculator();
+      }
+ 
      }
      handleClear(){
        this.setState({text: ""});
        let idIndex = this.props.components.findIndex(el => el === this.props.id);
-       graphObject.expressions.splice(idIndex,1,"")
-       graphObject.Clear();
+       graphObject.expressions[idIndex].expr = "";
+       graphObject.GraphCalculator();
      }
 
 
@@ -634,7 +697,7 @@ ReactDOM.render(<Sliders/>,document.getElementById("Sliders"));
 ReactDOM.render(<MuteButton/>,document.getElementById("MuteButton"));
 
 
-
+let expr;
 
 //#endregion
 function start(){
@@ -655,6 +718,7 @@ function start(){
   graphObject.DrawAxes();
   timingGraphObject.Setup();
   timingGraphObject.MoveTimerBar();
+ 
  
 }
 
