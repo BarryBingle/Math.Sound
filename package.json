@@ -7,7 +7,7 @@
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
     "algebra.js": "git+https://github.com/yodadude2003/rational.js.git",
-    "mathjs-expression-parser": "^1.0.2",
+    "mathjs": "^9.3.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.3",

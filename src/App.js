@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from "react-dom";
 import './App.css';
-
+import {derivative,parse,evaluate} from 'mathjs';
 import ReactSlider from 'react-slider';
 //#region Graph Actions
 
@@ -10,7 +10,8 @@ const graphContext = graphCanvas.getContext("2d");
 
 let graphCanvasHeight;
 let graphCanvasWidth;
-let math = require('mathjs-expression-parser');
+let math = require('mathjs');
+let pointsPlotted = 0;
 
 
 
@@ -22,14 +23,14 @@ let math = require('mathjs-expression-parser');
       this.lowerLimitX =-graphCanvasWidth/2;
       this.upperLimitY = graphCanvasHeight/2;
       this.lowerLimitY =-graphCanvasHeight/2;
-     
+      this.plotsPerScreen = 750; //TODO allow this to change for different processor strengths
       this.numGrids = 20; // number of grid markings
-      this.pointInterval = 2; // changes for balance of smoothness of line with time to compute, increase with more zoom decrease with less zoom
+      this.pointInterval = graphCanvasWidth/this.plotsPerScreen; // changes for balance of smoothness of line with time to compute, decrease with more zoom increase with less zoom, by default 1000 plots per screen
       this.zoomRatio = 1; // each pixel equals one unit at the start
       this.expressions = [{expr: "",domain:[-1000,1000],colour: "#000000",verticalAsymptotes: null}]; // array of objects that gets all info about a certain expression colour, value and domains. Initialised with empty graph
       this.fontSize = 10;
-      
-     
+      graphContext.lineJoin = "round";
+      graphContext.lineWidth="0.5";
       graphContext.setTransform(1, 0, 0, -1, graphCanvasWidth/2,graphCanvasHeight/2); // inverts y-axis in order to increase as you move further up as in the cartesian plane
       
 
@@ -92,7 +93,7 @@ let math = require('mathjs-expression-parser');
       let exprObject;
 
       try { // first test is to try and parse the expression
-      exprObject = math.parse(exprText);
+      exprObject = parse(exprText);
       
       console.log(exprObject)
       console.log(exprObject.toString())
@@ -129,9 +130,11 @@ let math = require('mathjs-expression-parser');
       
         
         //tests passed, expression valid
+        // get the derivative as well and add it as a property
         
         graphObject.expressions[idIndex].validity = true;
-      
+        graphObject.expressions[idIndex].derivative = derivative(exprObject,"x").toString();
+        
       return true
        
 
@@ -143,29 +146,38 @@ let math = require('mathjs-expression-parser');
         x: input
       }
       
-      return math.eval(expression,scope);
+      return evaluate(expression,scope);
         
       
     }
     ,
    
-  
     GraphCalculator: function() { // drawing your own graphs - doesn't work well when asymptotes but oh well
+      pointsPlotted = 0;
       this.ClearAll();
       this.DrawAxes();
       
+      let curGradient;
+      let prevGradient;
+
+      let gradientDifference;
+
+      let curY;
+      let prevY;
+
+    
+
+      let prevPointInterval = this.pointInterval;
+
       for(let z = 0;z<this.expressions.length;z++){
 
         let curExpression =this.expressions[z].expr;
+        let curDerivative = this.expressions[z].derivative;
         if(this.expressions[z].validity === true){
 
           graphContext.beginPath();
           graphContext.strokeStyle = this.expressions[z].colour;
           graphContext.moveTo(this.expressions[z].domain[0],this.calculate(this.expressions[z].domain[0],curExpression));
-
-          let hasAsymptotes = false;
-          let asymptotesTravelled;
-          let numAsymtotes;
 
             let lowerLimitOfLoop;
             let upperLimitOfLoop;
@@ -180,38 +192,44 @@ let math = require('mathjs-expression-parser');
               upperLimitOfLoop = this.upperLimitX;
             }
 
-
-            if(this.expressions[z].verticalAsymptotes != null){ // sets up assymtote crossing process
-              hasAsymptotes = true;
-              asymptotesTravelled = 0;  
-              numAsymtotes = this.expressions[z].verticalAsymptotes.length;
-              
-            }
-         
           for(let i = lowerLimitOfLoop ; i < upperLimitOfLoop ; i+= this.pointInterval){
             
-            if(hasAsymptotes === true && i>=this.expressions[z].verticalAsymptotes[asymptotesTravelled]-0.001 && asymptotesTravelled < numAsymtotes){
-              graphContext.lineTo(this.expressions[z].verticalAsymptotes[asymptotesTravelled]-0.001,this.calculate(this.expressions[z].verticalAsymptotes[asymptotesTravelled]-0.001,curExpression));
+            curY=this.calculate(i,curExpression)
+            curGradient = this.calculate(i,curDerivative);
+
+            if(Math.sign(curGradient) ===-1 && Math.sign(prevGradient) ===-1 && curY > prevY){
+              graphContext.lineTo(i,-10000);
               graphContext.stroke();
               graphContext.beginPath();
-              console.log(this.expressions[z].verticalAsymptotes[asymptotesTravelled])
-              i = this.expressions[z].verticalAsymptotes[asymptotesTravelled] + 0.001;
-              console.log(i)
-              graphContext.moveTo(i,this.calculate(i,curExpression));
-              console.log("crossed")
-              asymptotesTravelled++;
+              graphContext.moveTo(i+0.001,10000);
+            }
+            else if(Math.sign(curGradient) ===1 && Math.sign(prevGradient) ===1 && curY < prevY){
+              graphContext.lineTo(i,10000);
+              graphContext.stroke();
+              graphContext.beginPath();
+              graphContext.moveTo(i+0.001,-10000);
+           
+            }
+            else{
+              graphContext.lineTo(i,curY);
 
             }
-           
-            graphContext.lineTo(i,this.calculate(i,curExpression));
-              
-          
-            
 
+        
+          prevY = curY;
+          prevGradient=curGradient;
+           
+ 
+          pointsPlotted++;
+           
             
           }
+          console.log(pointsPlotted);
 
           graphContext.stroke();
+          this.pointInterval = prevPointInterval;
+          console.log(this.pointInterval);
+
         }
         
       }
@@ -352,8 +370,9 @@ let timingGraphObject = {
     let timerBarPosition = Math.round(graphObject.lowerLimitX + (graphObject.upperLimitX-graphObject.lowerLimitX)/this.beatsPerScreen*(this.beat-1))
     
     for(let i = 0; i <this.audioSources.length; i++){
-      if(graphObject.expressions[i].expr.validity === true && timerBarPosition >= graphObject.expressions[i].domain[0] && timerBarPosition <= graphObject.expressions[i].domain[1]){
+      if(graphObject.expressions[i].validity === true && timerBarPosition >= graphObject.expressions[i].domain[0] && timerBarPosition <= graphObject.expressions[i].domain[1]){
         let newFreq =  graphObject.calculate(Math.round(graphObject.lowerLimitX + (graphObject.upperLimitX-graphObject.lowerLimitX)/this.beatsPerScreen*(this.beat-1)),graphObject.expressions[i].expr);
+        
         if(newFreq <= -24000){
           this.audioSources[i].changeFrequency(-24000);
         }
