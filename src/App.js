@@ -883,20 +883,20 @@ class App extends React.PureComponent {
 
       <div>
         <Container fluid>
-          <Row>
 
-
-
-            <Sliders />
-            <MuteButton />
-
-          </Row>
           <Row>
             <Col xs={4}>
+
+              <Sliders />
+              <MuteButton />
+
               <AllInputs />
             </Col>
             <Col xs={8} >
-              <Graphs />
+              <div id="graphwrapper">
+                <Graphs />
+
+              </div>
 
             </Col>
 

@@ -13,6 +13,10 @@
     height: 25px;
     background-color: grey;
 }
+#graphwrapper{
+    position: sticky;
+    top: 0;
+}
 .graphCanvas{
     position: absolute;
     
