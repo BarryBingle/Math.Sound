@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from "react-dom";
 import './App.css';
-import { derivative, parse } from 'mathjs';
+import { derivative, electronMassDependencies, parse } from 'mathjs';
 import ReactSlider from 'react-slider';
 import { create, all } from 'mathjs';
 import { Col, Container, ListGroup, Row } from 'react-bootstrap';
@@ -42,7 +42,14 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
     this.scaleColour = "#000D34";
     graphContext.lineJoin = "round";
 
-    this.WindowSizeChange(window.innerWidth * 0.67, window.innerHeight);
+    if (window.innerWidth < 992) { // if the window less than lg breakpoint
+      this.WindowSizeChange(window.innerWidth, window.innerHeight * 0.5);
+
+    }
+    else {
+      this.WindowSizeChange(window.innerWidth * 0.67, window.innerHeight);
+
+    }
 
   },
   WindowSizeChange: function (width, height) {
@@ -857,7 +864,14 @@ class Graphs extends React.Component {
     }
   }
   handleResize() {
-    graphObject.WindowSizeChange(window.innerWidth * 0.67, window.innerHeight);
+    if (window.innerWidth < 992) { // if the window less than lg breakpoint
+      graphObject.WindowSizeChange(window.innerWidth, window.innerHeight * 0.5);
+
+    }
+    else {
+      graphObject.WindowSizeChange(window.innerWidth * 0.67, window.innerHeight);
+
+    }
   }
 
 
@@ -894,14 +908,14 @@ class App extends React.PureComponent {
         <Container fluid>
 
           <Row>
-            <Col xs={4}>
+            <Col xs={12} lg={{ span: 4, order: 'first' }}>
 
               <Sliders />
               <MuteButton />
 
               <AllInputs />
             </Col>
-            <Col xs={8} >
+            <Col xs={{ span: 12, order: 'first' }} lg={8} >
               <div id="graphwrapper">
                 <Graphs />
 
