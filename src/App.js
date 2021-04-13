@@ -62,7 +62,8 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
     this.functionWidth = "0.5";
     this.minorScaleWidth = "0.1";
     this.zoomRatio = 1; // each pixel equals one unit at the start
-
+    timingContext.strokeStyle = "#56DACC";
+    timingContext.lineWidth = 2;
 
     this.GraphCalculator();
 
@@ -394,8 +395,7 @@ let timingGraphObject = {
     this.audioSources = [new audioSource()]; // default first instrument/graph
     this.timer = 0;
 
-    timingContext.strokeStyle = "#56DACC";
-    timingContext.lineWidth = 2;
+
   },
   MoveTimerBar: function () {
 
