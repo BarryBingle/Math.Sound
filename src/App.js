@@ -37,13 +37,9 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
 
     this.plotsPerScreen = 750; //TODO allow this to change for different processor strengths
     this.numGrids = 20; // number of grid markings
-    this.zoomRatio = 1; // each pixel equals one unit at the start
     this.expressions = [{ expr: "", domain: [-1000, 1000], colour: "#000000", verticalAsymptotes: null }]; // array of objects that gets all info about a certain expression colour, value and domains. Initialised with empty graph
 
-    this.fontSize = 10;
     this.scaleColour = "#000D34";
-    this.functionWidth = "0.5";
-    this.minorScaleWidth = "0.1";
     graphContext.lineJoin = "round";
 
     this.WindowSizeChange(window.innerWidth * 0.67, window.innerHeight);
@@ -62,15 +58,19 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
     this.pointInterval = graphCanvas.width / this.plotsPerScreen; // changes for balance of smoothness of line with time to compute, decrease with more zoom increase with less zoom, by default 1000 plots per screen
 
     graphContext.setTransform(1, 0, 0, -1, graphCanvas.width / 2, graphCanvas.height / 2); // inverts y-axis in order to increase as you move further up as in the cartesian plane
-    //graphObject.ChangeDefaultScaling();
+    this.fontSize = 10;
+    this.functionWidth = "0.5";
+    this.minorScaleWidth = "0.1";
+    this.zoomRatio = 1; // each pixel equals one unit at the start
+
 
     this.GraphCalculator();
 
   },
   ChangeDefaultScaling() {
-    if (this.lowerLimitX < -200 && this.upperLimitX > 200) {
-      this.Scale(400 / (Math.abs(this.upperLimitX) + Math.abs(this.lowerLimitX)))
-    }
+
+    this.Scale(1 / (Math.abs(this.upperLimitX) + Math.abs(this.lowerLimitX)))
+
   },
   ExpressionValidifier(exprText, idIndex) { // checks expression before making calculations to avoid wasting resources
     graphObject.expressions[idIndex].validity = false;
