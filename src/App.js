@@ -100,9 +100,18 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
     let operatorNodes = exprObject.filter(function (node) {
       return node.isOperatorNode;
     })
+    let functionNodes = exprObject.filter(function (node) {
+      return node.isFunctionNode;
+    })
     // since symbolnodes are used for variables and functions, we must check that all symbolnodes are
     // either x or a function, also check that no operation is done that has a symbolnode that is not x
+    for (let i = 0; i < functionNodes.length; i++) {
+      if (functionNodes[i].args.length < 1) {
+        console.log("non acceptable operation found")
 
+        return false;
+      }
+    }
     if (symbolNodes.length > 0) {
 
       for (let i = 0; i < symbolNodes.length; i++) {
