@@ -13,4 +13,13 @@
     height: 25px;
     background-color: grey;
 }
+.graphCanvas{
+    position: absolute;
     
+    z-index: 2;
+}
+.timingCanvas{
+    position: absolute;
+    
+    z-index: 0;
+}
