@@ -65,12 +65,16 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
     timingContext.strokeStyle = "#56DACC";
     timingContext.lineWidth = 2;
 
+    this.ChangeDefaultScaling()
+
     this.GraphCalculator();
 
   },
   ChangeDefaultScaling() {
+    if (this.lowerLimitX < -1000 || this.upperLimitX > 1000) {
+      this.Scale(2000 / (Math.abs(this.upperLimitX) + Math.abs(this.lowerLimitX)))
 
-    this.Scale(1 / (Math.abs(this.upperLimitX) + Math.abs(this.lowerLimitX)))
+    }
 
   },
   ExpressionValidifier(exprText, idIndex) { // checks expression before making calculations to avoid wasting resources
@@ -880,6 +884,14 @@ class App extends React.PureComponent {
       <div>
         <Container fluid>
           <Row>
+
+
+
+            <Sliders />
+            <MuteButton />
+
+          </Row>
+          <Row>
             <Col xs={4}>
               <AllInputs />
             </Col>
@@ -890,14 +902,7 @@ class App extends React.PureComponent {
 
 
           </Row>
-          <Row>
 
-
-
-            <Sliders />
-            <MuteButton />
-
-          </Row>
 
 
         </Container>
