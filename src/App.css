@@ -1,5 +1,5 @@
 .sliderTrack{
-    width: 100%;
+    width: 5%;
     height: 25px;
     
 }
@@ -15,18 +15,23 @@
 }
 #graphwrapper{
     position: sticky;
-    
     top:0;
 }
 
 .graphCanvas{
     position: absolute;
+    border: 0.2vw solid #000D34;
+    touch-action: none;
+
     
     z-index: 2;
 }
 .timingCanvas{
     position: relative;
-    
+    border: 1% solid #000D34;
+    touch-action: none;
+
     
     z-index: 0;
 }
+

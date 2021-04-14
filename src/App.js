@@ -4,7 +4,7 @@ import './App.css';
 import { derivative, electronMassDependencies, parse } from 'mathjs';
 import ReactSlider from 'react-slider';
 import { create, all } from 'mathjs';
-import { Col, Container, ListGroup, Row } from 'react-bootstrap';
+import { Col, Container, ListGroup, Row, Navbar } from 'react-bootstrap';
 
 //#region Graph Actions
 
@@ -43,11 +43,11 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
     graphContext.lineJoin = "round";
 
     if (window.innerWidth < 992) { // if the window less than lg breakpoint
-      this.WindowSizeChange(window.innerWidth, window.innerHeight);
+      this.WindowSizeChange(window.innerWidth * 0.95, window.innerHeight * 0.5);
 
     }
     else {
-      this.WindowSizeChange(window.innerWidth * 0.67, window.innerHeight);
+      this.WindowSizeChange(window.innerWidth * 0.65, window.innerHeight * 0.9);
 
     }
 
@@ -868,11 +868,11 @@ class Graphs extends React.Component {
       console.log("sedas")
       this.windowWidth = window.innerWidth;
       if (window.innerWidth < 992) { // if the window less than lg breakpoint
-        graphObject.WindowSizeChange(window.innerWidth, window.innerHeight * 0.5);
+        graphObject.WindowSizeChange(window.innerWidth * 0.95, window.innerHeight * 0.5);
 
       }
       else {
-        graphObject.WindowSizeChange(window.innerWidth * 0.67, window.innerHeight);
+        graphObject.WindowSizeChange(window.innerWidth * 0.65, window.innerHeight * 0.9);
 
       }
     }
@@ -911,16 +911,21 @@ class App extends React.PureComponent {
 
       <div>
         <Container fluid>
+          <Row>
+
+
+
+          </Row>
 
           <Row>
-            <Col xs={12} lg={{ span: 4, order: 'first' }}>
+            <Col xs={12} lg={{ span: 4, order: 'first' }} >
 
               <Sliders />
               <MuteButton />
 
               <AllInputs />
             </Col>
-            <Col xs={{ span: 12, order: 'first' }} lg={8} className="position-sticky">
+            <Col xs={{ span: 12, order: 'first' }} lg={8} className="mx-auto">
               <div id="graphwrapper">
                 <Graphs />
 
@@ -936,7 +941,7 @@ class App extends React.PureComponent {
         </Container>
 
 
-      </div>
+      </div >
     )
   }
 }
