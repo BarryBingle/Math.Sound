@@ -797,7 +797,9 @@ class Graphs extends React.Component {
     this.dragCoords = {
       x: 0,
       y: 0
-    }
+    };
+    this.pointerEventArray = [];
+    this.prevPointDist = -1;
     this.dragging = false
 
     this.handleMouseDown = this.handleMouseDown.bind(this);
@@ -822,7 +824,8 @@ class Graphs extends React.Component {
   }
 
   handleMouseDown(e) {
-
+    e.persist();
+    this.pointerEventArray.push(e);
     this.dragging = true;
     this.dragCoords = {
       x: e.clientX,
@@ -830,6 +833,37 @@ class Graphs extends React.Component {
     }
   }
   handleMouseMove(e) {
+    e.persist();
+    for (let i = 0; i < this.pointerEventArray.length; i++) { // for handling a pinch gesture
+      if (e.pointerId === this.pointerEventArray[i].pointerId) {
+        this.pointerEventArray[i] = e;
+        break;
+      }
+    }
+
+    if (this.pointerEventArray.length == 2) {
+      let curPointDist = Math.hypot(this.pointerEventArray[0].clientX - this.pointerEventArray[1].clientX, this.pointerEventArray[0].clientY - this.pointerEventArray[1].clientY);
+      if (this.prevPointDist > 0) {
+        if (curPointDist > this.prevPointDist) {
+          console.log("zoom in")
+
+          graphObject.Scale(0.99);
+
+        }
+        else if (curPointDist < this.prevPointDist) {
+          console.log("zoom out")
+
+          graphObject.Scale(1.01);
+
+        }
+      }
+
+
+      this.prevPointDist = curPointDist;
+      return;
+
+    }
+
     if (this.dragging === true) {
       graphObject.ShiftGraph(e.clientX - this.dragCoords.x, (this.dragCoords.y - e.clientY));
     }
@@ -840,26 +874,35 @@ class Graphs extends React.Component {
     }
 
   }
-  handleMouseUp() {
+  handleMouseUp(e) {
+    e.persist();
+    for (let i = 0; i < this.pointerEventArray.length; i++) {
+      if (this.pointerEventArray[i].pointerId == e.pointerId) {
+        this.pointerEventArray.splice(i, 1);
+        break;
+      }
+    }
+
+    if (this.pointerEventArray.length < 2) {
+      this.prevPointDist = -1;
+    }
 
     this.dragging = false
 
   }
   handleMouseOut() {
-
-
     this.dragging = false
 
   }
   handleWheel(e) {
 
     if (e.deltaY < 0) {
-      // Zoom out
+      // Zoom in
 
       graphObject.Scale(0.9);
     }
     else {
-      // Zoom in
+      // Zoom out
       graphObject.Scale(1.1);
     }
   }
