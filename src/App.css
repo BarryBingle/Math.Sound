@@ -16,6 +16,7 @@
 #graphwrapper{
     position: sticky;
     
+    top:0;
 }
 
 .graphCanvas{

@@ -43,7 +43,7 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
     graphContext.lineJoin = "round";
 
     if (window.innerWidth < 992) { // if the window less than lg breakpoint
-      this.WindowSizeChange(window.innerWidth, window.innerHeight * 0.5);
+      this.WindowSizeChange(window.innerWidth, window.innerHeight);
 
     }
     else {
@@ -793,7 +793,7 @@ class Graphs extends React.Component {
     super(props);
     this.graphCanvasRef = React.createRef();
     this.timingCanvasRef = React.createRef();
-
+    this.windowWidth = window.innerWidth;
     this.dragCoords = {
       x: 0,
       y: 0
@@ -864,14 +864,19 @@ class Graphs extends React.Component {
     }
   }
   handleResize() {
-    if (window.innerWidth < 992) { // if the window less than lg breakpoint
-      graphObject.WindowSizeChange(window.innerWidth, window.innerHeight * 0.5);
+    if (window.innerWidth !== this.windowWidth) { // makes resize only happen for width changes
+      console.log("sedas")
+      this.windowWidth = window.innerWidth;
+      if (window.innerWidth < 992) { // if the window less than lg breakpoint
+        graphObject.WindowSizeChange(window.innerWidth, window.innerHeight * 0.5);
 
-    }
-    else {
-      graphObject.WindowSizeChange(window.innerWidth * 0.67, window.innerHeight);
+      }
+      else {
+        graphObject.WindowSizeChange(window.innerWidth * 0.67, window.innerHeight);
 
+      }
     }
+
   }
 
 
@@ -881,8 +886,8 @@ class Graphs extends React.Component {
 
       <div>
 
-        <canvas ref={this.graphCanvasRef} onMouseDown={this.handleMouseDown} onMouseMove={this.handleMouseMove}
-          onMouseUp={this.handleMouseUp} onMouseOut={this.handleMouseOut} onWheel={this.handleWheel} className="graphCanvas"> </canvas>
+        <canvas ref={this.graphCanvasRef} onPointerDown={this.handleMouseDown} onPointerMove={this.handleMouseMove}
+          onPointerUp={this.handleMouseUp} onPointerOut={this.handleMouseOut} onWheel={this.handleWheel} className="graphCanvas"> </canvas>
 
         <canvas ref={this.timingCanvasRef} className="timingCanvas"></canvas>
 
@@ -915,7 +920,7 @@ class App extends React.PureComponent {
 
               <AllInputs />
             </Col>
-            <Col xs={{ span: 12, order: 'first' }} lg={8} >
+            <Col xs={{ span: 12, order: 'first' }} lg={8} className="position-sticky">
               <div id="graphwrapper">
                 <Graphs />
 
