@@ -1,5 +1,5 @@
 .sliderTrack{
-    width: 5%;
+    width: 5vw;
     height: 25px;
     
 }
@@ -16,6 +16,10 @@
 #graphwrapper{
     position: sticky;
     top:0;
+    
+}
+#navbarpadding{
+    padding-top: 5vh;
 }
 
 .graphCanvas{
@@ -28,10 +32,14 @@
 }
 .timingCanvas{
     position: relative;
-    border: 1% solid #000D34;
+    border: 0.2vw solid #000D34;
+
     touch-action: none;
 
     
     z-index: 0;
+}
+.navbar{
+    height:5vh;
 }
 

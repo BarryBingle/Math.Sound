@@ -1,10 +1,10 @@
 import React from 'react';
 import ReactDOM from "react-dom";
 import './App.css';
-import { derivative, electronMassDependencies, parse } from 'mathjs';
+import { derivative, parse } from 'mathjs';
 import ReactSlider from 'react-slider';
 import { create, all } from 'mathjs';
-import { Col, Container, ListGroup, Row, Navbar } from 'react-bootstrap';
+import { Col, Container, ListGroup, Row, Navbar, Nav } from 'react-bootstrap';
 
 //#region Graph Actions
 
@@ -47,7 +47,7 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
 
     }
     else {
-      this.WindowSizeChange(window.innerWidth * 0.65, window.innerHeight * 0.9);
+      this.WindowSizeChange(window.innerWidth * 0.65, window.innerHeight * 0.95);
 
     }
 
@@ -808,6 +808,7 @@ class Graphs extends React.Component {
     this.handleMouseOut = this.handleMouseOut.bind(this);
     this.handleWheel = this.handleWheel.bind(this);
     this.handleResize = this.handleResize.bind(this);
+    // this.handleMouseEnter = this.handleMouseEnter.bind(this);
 
 
 
@@ -822,7 +823,14 @@ class Graphs extends React.Component {
     window.addEventListener("resize", this.handleResize)
 
   }
-
+  // preventDefault(e) {
+  //   e.returnValue = false;
+  // }
+  // handleMouseEnter() {
+  //   document.addEventListener('wheel', this.preventDefault, {
+  //     passive: false,
+  //   })
+  // }
   handleMouseDown(e) {
     e.persist();
     this.pointerEventArray.push(e);
@@ -892,10 +900,11 @@ class Graphs extends React.Component {
   }
   handleMouseOut() {
     this.dragging = false
-
+    // document.removeEventListener('wheel', this.preventDefault, false)
   }
-  handleWheel(e) {
 
+
+  handleWheel(e) {
     if (e.deltaY < 0) {
       // Zoom in
 
@@ -904,6 +913,7 @@ class Graphs extends React.Component {
     else {
       // Zoom out
       graphObject.Scale(1.1);
+
     }
   }
   handleResize() {
@@ -915,7 +925,7 @@ class Graphs extends React.Component {
 
       }
       else {
-        graphObject.WindowSizeChange(window.innerWidth * 0.65, window.innerHeight * 0.9);
+        graphObject.WindowSizeChange(window.innerWidth * 0.65, window.innerHeight * 0.95);
 
       }
     }
@@ -954,31 +964,39 @@ class App extends React.PureComponent {
 
       <div>
         <Container fluid>
-          <Row>
-
-
-
-          </Row>
-
-          <Row>
-            <Col xs={12} lg={{ span: 4, order: 'first' }} >
-
+          <Navbar fixed="top" bg="dark" className="navbar">
+            <Nav>
+              <Nav.Link href="#help">Help</Nav.Link>
               <Sliders />
               <MuteButton />
+            </Nav>
 
-              <AllInputs />
-            </Col>
-            <Col xs={{ span: 12, order: 'first' }} lg={8} className="mx-auto">
-              <div id="graphwrapper">
-                <Graphs />
+          </Navbar>
 
-              </div>
-
-            </Col>
+          <div id="navbarpadding">
+            <Row>
+              <Col xs={12} lg={{ span: 4, order: 'first' }} >
 
 
-          </Row>
 
+                <AllInputs />
+              </Col>
+              <Col xs={{ span: 12, order: 'first' }} lg={8} className="mx-auto">
+                <div id="graphwrapper">
+                  <Graphs />
+
+                </div>
+
+              </Col>
+
+
+            </Row>
+            <Row id="help">
+              <p>help</p>
+            </Row>
+
+
+          </div>
 
 
         </Container>
