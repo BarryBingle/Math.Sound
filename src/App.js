@@ -808,7 +808,7 @@ class Graphs extends React.Component {
     this.handleMouseOut = this.handleMouseOut.bind(this);
     this.handleWheel = this.handleWheel.bind(this);
     this.handleResize = this.handleResize.bind(this);
-    // this.handleMouseEnter = this.handleMouseEnter.bind(this);
+    this.handleMouseEnter = this.handleMouseEnter.bind(this);
 
 
 
@@ -823,14 +823,14 @@ class Graphs extends React.Component {
     window.addEventListener("resize", this.handleResize)
 
   }
-  // preventDefault(e) {
-  //   e.returnValue = false;
-  // }
-  // handleMouseEnter() {
-  //   document.addEventListener('wheel', this.preventDefault, {
-  //     passive: false,
-  //   })
-  // }
+  preventDefault(e) {
+    e.returnValue = false;
+  }
+  handleMouseEnter() {
+    document.addEventListener('wheel', this.preventDefault, {
+      passive: false,
+    })
+  }
   handleMouseDown(e) {
     e.persist();
     this.pointerEventArray.push(e);
@@ -900,7 +900,7 @@ class Graphs extends React.Component {
   }
   handleMouseOut() {
     this.dragging = false
-    // document.removeEventListener('wheel', this.preventDefault, false)
+    document.removeEventListener('wheel', this.preventDefault, false)
   }
 
 
@@ -940,7 +940,7 @@ class Graphs extends React.Component {
       <div>
 
         <canvas ref={this.graphCanvasRef} onPointerDown={this.handleMouseDown} onPointerMove={this.handleMouseMove}
-          onPointerUp={this.handleMouseUp} onPointerOut={this.handleMouseOut} onWheel={this.handleWheel} className="graphCanvas"> </canvas>
+          onPointerUp={this.handleMouseUp} onPointerOut={this.handleMouseOut} onWheel={this.handleWheel} onPointerEnter={this.handleMouseEnter} className="graphCanvas"> </canvas>
 
         <canvas ref={this.timingCanvasRef} className="timingCanvas"></canvas>
 
