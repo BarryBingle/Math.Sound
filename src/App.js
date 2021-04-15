@@ -718,18 +718,43 @@ class Input extends React.Component {
 }
 
 
-class Sliders extends React.Component {
+class BPS extends React.Component {
 
   constructor() {
     super()
     this.handleChangeBPS = this.handleChangeBPS.bind(this);
-    this.handleChangeTBB = this.handleChangeTBB.bind(this);
+
   }
 
   handleChangeBPS(e) {
     timingGraphObject.beatsPerScreen = e.target.value;
 
   }
+
+
+  render() {
+    return (
+      <div>
+
+        <input onChange={this.handleChangeBPS} type="range" min="1" max="100" step="1"></input>
+        <label>BPS</label>
+
+
+      </div>
+
+
+    )
+  }
+
+}
+class TBB extends React.Component {
+
+  constructor() {
+    super()
+
+    this.handleChangeTBB = this.handleChangeTBB.bind(this);
+  }
+
   handleChangeTBB(e) {
     timingGraphObject.timeBetweenBeats = e.target.value;
 
@@ -737,16 +762,12 @@ class Sliders extends React.Component {
 
   render() {
     return (
+
       <div>
-        <div>
-          <input onChange={this.handleChangeBPS} type="range" min="1" max="100" step="1"></input>
-          <label>BPS</label>
-        </div>
-        <div>
-          <input onChange={this.handleChangeTBB} type="range" min="100" max="1000" step="100"></input>
-          <label>TBB</label>
-        </div>
+        <input onChange={this.handleChangeTBB} type="range" min="100" max="1000" step="100"></input>
+        <label>TBB</label>
       </div>
+
 
 
     )
@@ -964,39 +985,52 @@ class App extends React.PureComponent {
 
       <div>
         <Container fluid>
-          <Navbar fixed="top" bg="dark" className="navbar">
-            <Nav>
-              <Nav.Link href="#help">Help</Nav.Link>
-              <Sliders />
+          <Nav className="topbar">
+
+            <Nav.Item href="#help" className="text-white">Help</Nav.Item>
+            <Nav.Item>
+
+              <BPS />
+
+            </Nav.Item>
+            <Nav.Item>
+
+              <TBB />
+
+            </Nav.Item>
+            <Nav.Item>
+
               <MuteButton />
-            </Nav>
 
-          </Navbar>
-
-          <div id="navbarpadding">
-            <Row>
-              <Col xs={12} lg={{ span: 4, order: 'first' }} >
+            </Nav.Item>
 
 
+          </Nav>
+
+          <Row>
+            <Col xs={12} lg={{ span: 4, order: 'first' }} >
+              <div id="inputboxes">
 
                 <AllInputs />
-              </Col>
-              <Col xs={{ span: 12, order: 'first' }} lg={8} className="mx-auto">
-                <div id="graphwrapper">
-                  <Graphs />
+              </div>
 
-                </div>
+            </Col>
 
-              </Col>
+            <Col xs={{ span: 12, order: 'first' }} lg={8} className="mx-auto">
+              <div id="graphwrapper">
+                <Graphs />
 
+              </div>
 
-            </Row>
-            <Row id="help">
-              <p>help</p>
-            </Row>
+            </Col>
 
 
-          </div>
+          </Row>
+          <Row id="help">
+            <p>help</p>
+          </Row>
+
+
 
 
         </Container>

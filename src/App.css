@@ -13,14 +13,16 @@
     height: 25px;
     background-color: grey;
 }
-#graphwrapper{
-    position: sticky;
-    top:0;
-    
+
+
+
+@media (min-width: 992px){
+    #graphwrapper{ 
+        position: fixed;
 }
-#navbarpadding{
-    padding-top: 5vh;
 }
+
+
 
 .graphCanvas{
     position: absolute;
@@ -36,10 +38,19 @@
 
     touch-action: none;
 
-    
-    z-index: 0;
+        
+    z-index: 1;
 }
-.navbar{
+.topbar{
+    position: sticky;
+    top:0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 3;
     height:5vh;
+    background-color: #000D34;
+    color:white;
 }
 
