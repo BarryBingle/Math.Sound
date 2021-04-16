@@ -19,7 +19,8 @@
 @media (min-width: 992px){
     #graphwrapper{ 
         position: fixed;
-        right: 0;
+        right:15px;
+        
 
     }
 
@@ -44,6 +45,7 @@ background-image:
 .graphCanvas{
     position: absolute;
     touch-action: none;
+    border: none;
     
     
     z-index: 1;
@@ -52,7 +54,7 @@ background-image:
     position: relative;
 
     touch-action: none;
-
+    border: none;
         
     z-index: 2;
 }
@@ -65,8 +67,7 @@ background-image:
     align-items: center;
     justify-content: space-between;
     z-index: 3;
-    height:5vh;
-    background-color: #000D34;
+    width: 100%;
     color:white;
 }
 

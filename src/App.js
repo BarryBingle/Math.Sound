@@ -4,7 +4,7 @@ import './App.css';
 import { derivative, parse } from 'mathjs';
 import ReactSlider from 'react-slider';
 import { create, all } from 'mathjs';
-import { Col, Container, ListGroup, Row, Navbar, Nav } from 'react-bootstrap';
+import { Col, Container, ListGroup, Row, Nav, Form } from 'react-bootstrap';
 
 //#region Graph Actions
 
@@ -43,9 +43,12 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
 
     graphContext.lineJoin = "round";
 
-    if (window.innerWidth < 992) { // if the window less than lg breakpoint
-      this.WindowSizeChange(document.getElementById('graphwrapper').getBoundingClientRect().width, window.innerHeight * 0.5);
+    if (window.innerWidth < 992) {
+      this.WindowSizeChange(document.getElementById('graphwrapper').getBoundingClientRect().width, window.innerHeight * 0.5); // raid boss of a bug, on the first time around calling
+      this.WindowSizeChange(document.getElementById('graphwrapper').getBoundingClientRect().width, window.innerHeight * 0.5); // this function if the window is below 400px wide it will
+      //be off by 17 for some reason. I would guess it's some initialization changing its width but this fixes it so 
 
+      console.log(document.getElementById('graphwrapper').getBoundingClientRect().width)
     }
     else {
       this.WindowSizeChange(window.innerWidth * 0.65, window.innerHeight);
@@ -54,6 +57,7 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
 
   },
   WindowSizeChange: function (width, height) {
+    console.log(width)
     graphCanvas.width = width;
     graphCanvas.height = height;
     timingCanvas.width = width;
@@ -728,10 +732,12 @@ class BPS extends React.Component {
   constructor() {
     super()
     this.handleChangeBPS = this.handleChangeBPS.bind(this);
+    this.state = { value: 50 };
 
   }
 
   handleChangeBPS(e) {
+    this.setState({ value: e.target.value });
     timingGraphObject.beatsPerScreen = e.target.value;
 
   }
@@ -739,13 +745,17 @@ class BPS extends React.Component {
 
   render() {
     return (
-      <div>
 
-        <input onChange={this.handleChangeBPS} type="range" min="1" max="100" step="1"></input>
-        <label>BPS</label>
+      <Form>
+        <Form.Group >
+          <Form.Label>Beats per screen</Form.Label>
 
+          <Form.Control onChange={this.handleChangeBPS} type="range" min="1" max="100" step="1"></Form.Control>
+          <Form.Label>{this.state.value}</Form.Label>
 
-      </div>
+        </Form.Group>
+
+      </Form>
 
 
     )
@@ -758,9 +768,11 @@ class TBB extends React.Component {
     super()
 
     this.handleChangeTBB = this.handleChangeTBB.bind(this);
+    this.state = { value: 600 };
   }
 
   handleChangeTBB(e) {
+    this.setState({ value: e.target.value });
     timingGraphObject.timeBetweenBeats = e.target.value;
 
   }
@@ -768,10 +780,15 @@ class TBB extends React.Component {
   render() {
     return (
 
-      <div>
-        <input onChange={this.handleChangeTBB} type="range" min="100" max="1000" step="100"></input>
-        <label>TBB</label>
-      </div>
+      <Form>
+        <Form.Group >
+          <Form.Label>Time between beats</Form.Label>
+
+          <Form.Control onChange={this.handleChangeTBB} type="range" min="100" max="1000" step="100"></Form.Control>
+          <Form.Label>{this.state.value / 1000}s</Form.Label>
+        </Form.Group>
+
+      </Form>
 
 
 
@@ -801,12 +818,17 @@ class MuteButton extends React.Component {
 
   render() {
     return (
-      <div>
 
-        <input onChange={this.handleChange} type="checkbox" ></input>
-        <label>Enable Audio</label>
 
-      </div>
+      <Form>
+        <Form.Group >
+          <Form.Label>Enable Audio</Form.Label>
+
+          <Form.Control onChange={this.handleChange} type="checkbox" ></Form.Control>
+
+        </Form.Group>
+
+      </Form>
 
 
     )
@@ -944,7 +966,7 @@ class Graphs extends React.Component {
   }
   handleResize() {
     if (window.innerWidth !== this.windowWidth) { // makes resize only happen for width changes
-      console.log("sedas")
+      console.log(document.getElementById('graphwrapper').getBoundingClientRect().width)
       this.windowWidth = window.innerWidth;
       if (window.innerWidth < 992) { // if the window less than lg breakpoint
         graphObject.WindowSizeChange(document.getElementById('graphwrapper').getBoundingClientRect().width, window.innerHeight * 0.5);
@@ -960,7 +982,6 @@ class Graphs extends React.Component {
 
 
   render() {
-    console.log("rerender");
     return (
 
       <div>
@@ -976,7 +997,6 @@ class Graphs extends React.Component {
 }
 class App extends React.PureComponent {
   componentDidMount() {
-    console.log("shouldrender")
 
     graphObject.Setup();
     graphObject.DrawAxes();
@@ -990,7 +1010,7 @@ class App extends React.PureComponent {
 
       <div>
         <Container fluid className="bg">
-          <Nav className="topbar bg">
+          <Nav className="topbar bg ">
 
             <Nav.Item href="#help" className="text-white">Help</Nav.Item>
             <Nav.Item>
