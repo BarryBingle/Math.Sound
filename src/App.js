@@ -990,7 +990,7 @@ class App extends React.PureComponent {
 
       <div>
         <Container fluid className="bg">
-          <Nav className="topbar">
+          <Nav className="topbar bg">
 
             <Nav.Item href="#help" className="text-white">Help</Nav.Item>
             <Nav.Item>
@@ -1013,7 +1013,7 @@ class App extends React.PureComponent {
           </Nav>
 
           <Row>
-            <Col xs={12} lg={{ span: 4, order: 'first' }} className="inputboxes">
+            <Col xs={12} lg={{ span: 4, order: 'first' }}>
 
 
               <AllInputs />
