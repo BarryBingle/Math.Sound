@@ -19,18 +19,33 @@
 @media (min-width: 992px){
     #graphwrapper{ 
         position: fixed;
-}
+        right: 0;
+
+    }
+
 }
 
+
+.inputboxes{
+    border: 0.2vw solid #000D34;
+
+}
+.bg{
+    background-color: #000D34;
+}
+html{
+    background-color: #000D34;
+    
+}
 
 
 .graphCanvas{
     position: absolute;
     border: 0.2vw solid #000D34;
     touch-action: none;
-
     
-    z-index: 2;
+    
+    z-index: 1;
 }
 .timingCanvas{
     position: relative;
@@ -39,9 +54,10 @@
     touch-action: none;
 
         
-    z-index: 1;
+    z-index: 2;
 }
 .topbar{
+
     position: sticky;
     top:0;
     display: flex;

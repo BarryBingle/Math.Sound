@@ -40,14 +40,15 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
     this.expressions = [{ expr: "", domain: [-1000, 1000], colour: "#000000", verticalAsymptotes: null }]; // array of objects that gets all info about a certain expression colour, value and domains. Initialised with empty graph
 
     this.scaleColour = "#000D34";
+
     graphContext.lineJoin = "round";
 
     if (window.innerWidth < 992) { // if the window less than lg breakpoint
-      this.WindowSizeChange(window.innerWidth * 0.95, window.innerHeight * 0.5);
+      this.WindowSizeChange(document.getElementById('graphwrapper').getBoundingClientRect().width, window.innerHeight * 0.5);
 
     }
     else {
-      this.WindowSizeChange(window.innerWidth * 0.65, window.innerHeight * 0.95);
+      this.WindowSizeChange(window.innerWidth * 0.65, window.innerHeight);
 
     }
 
@@ -69,8 +70,8 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
     this.functionWidth = "0.5";
     this.minorScaleWidth = "0.1";
     this.zoomRatio = 1; // each pixel equals one unit at the start
-    timingContext.strokeStyle = "#56DACC";
     timingContext.lineWidth = 2;
+    timingContext.strokeStyle = "#56DACC";
 
     this.ChangeDefaultScaling()
 
@@ -293,11 +294,11 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
     graphContext.save();
     graphContext.setTransform(1, 0, 0, 1, 0, 0);
     graphContext.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+    graphContext.fillStyle = "white";
+    graphContext.fillRect(0, 0, graphCanvas.width, graphCanvas.height);
     graphContext.restore();
   },
-  Clear: function () {
-    this.GraphCalculator();
-  },
+
   DrawAxes: function () {
 
     graphContext.beginPath(); // axes
@@ -424,6 +425,10 @@ let timingGraphObject = {
       this.beat = 1;
     }
     timingContext.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+
+
+
+
     timingContext.beginPath();
     timingContext.moveTo(graphCanvas.width / this.beatsPerScreen * this.beat, 0);
     timingContext.lineTo(graphCanvas.width / this.beatsPerScreen * this.beat, graphCanvas.height);
@@ -942,11 +947,11 @@ class Graphs extends React.Component {
       console.log("sedas")
       this.windowWidth = window.innerWidth;
       if (window.innerWidth < 992) { // if the window less than lg breakpoint
-        graphObject.WindowSizeChange(window.innerWidth * 0.95, window.innerHeight * 0.5);
+        graphObject.WindowSizeChange(document.getElementById('graphwrapper').getBoundingClientRect().width, window.innerHeight * 0.5);
 
       }
       else {
-        graphObject.WindowSizeChange(window.innerWidth * 0.65, window.innerHeight * 0.95);
+        graphObject.WindowSizeChange(window.innerWidth * 0.65, window.innerHeight);
 
       }
     }
@@ -984,7 +989,7 @@ class App extends React.PureComponent {
     return (
 
       <div>
-        <Container fluid>
+        <Container fluid className="bg">
           <Nav className="topbar">
 
             <Nav.Item href="#help" className="text-white">Help</Nav.Item>
@@ -1008,15 +1013,15 @@ class App extends React.PureComponent {
           </Nav>
 
           <Row>
-            <Col xs={12} lg={{ span: 4, order: 'first' }} >
-              <div id="inputboxes">
+            <Col xs={12} lg={{ span: 4, order: 'first' }} className="inputboxes">
 
-                <AllInputs />
-              </div>
+
+              <AllInputs />
+
 
             </Col>
 
-            <Col xs={{ span: 12, order: 'first' }} lg={8} className="mx-auto">
+            <Col xs={{ span: 12, order: 'first' }} lg={8} className="graphColumn">
               <div id="graphwrapper">
                 <Graphs />
 
