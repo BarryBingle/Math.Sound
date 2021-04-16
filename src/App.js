@@ -57,7 +57,6 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
 
   },
   WindowSizeChange: function (width, height) {
-    console.log(width)
     graphCanvas.width = width;
     graphCanvas.height = height;
     timingCanvas.width = width;
@@ -443,7 +442,7 @@ let timingGraphObject = {
     let timerBarPosition = Math.round(graphObject.lowerLimitX + (graphObject.upperLimitX - graphObject.lowerLimitX) / this.beatsPerScreen * (this.beat - 1))
 
     for (let i = 0; i < this.audioSources.length; i++) {
-      if (graphObject.expressions[i].validity === true && timerBarPosition >= graphObject.expressions[i].domain[0] && timerBarPosition <= graphObject.expressions[i].domain[1]) {
+      if (graphObject.expressions[i].validity === true && timerBarPosition >= graphObject.expressions[i].domain[0] && timerBarPosition <= graphObject.expressions[i].domain[1] && this.audioSources[i].muteToggle === false) {
         let newFreq = graphObject.calculate(Math.round(graphObject.lowerLimitX + (graphObject.upperLimitX - graphObject.lowerLimitX) / this.beatsPerScreen * (this.beat - 1)), graphObject.expressions[i].expr);
 
 
@@ -491,11 +490,12 @@ class audioSource {
     this.instrumentNumber = 1; // default
     this.frequency = 0;
     this.player = new Instruments();
+    this.muteToggle = true;
 
 
   }
   play() {
-    if (muteToggle === false) {
+    if (this.muteToggle === false) {
       this.player.play(this.instrumentNumber, this.frequency, 1, 0, 0.5)
 
 
@@ -506,11 +506,13 @@ class audioSource {
 
     this.frequency = Math.abs(newFreq);
   }
+  changeMuteToggle(newVal) {
+    this.muteToggle = newVal;
+  }
   changeInstrument(newInstrumentNumber) {
 
 
     this.instrumentNumber = newInstrumentNumber;
-    console.log(newInstrumentNumber);
   }
 
 
@@ -528,14 +530,13 @@ class AllInputs extends React.Component {
     this.IDCount = 0;
   }
   create(id) {
-    let prevState = this.state.components
+    let prevState = this.state.components;
     this.IDCount++;
     let idIndex = prevState.findIndex(el => el === id);
     prevState.splice(idIndex + 1, 0, this.IDCount)
     graphObject.expressions.splice(idIndex + 1, 0, new expressionConstructor("", [-1000, 1000], "#000000"))
     timingGraphObject.audioSources.splice(idIndex + 1, 0, new audioSource())
     this.setState({ components: prevState });
-    //console.log(this.state.components)
   }
 
   delete(id) {
@@ -545,7 +546,6 @@ class AllInputs extends React.Component {
     graphObject.expressions.splice(idIndex, 1);
     timingGraphObject.audioSources.splice(idIndex, 1);
     this.setState({ components: prevState });
-    //console.log(this.state.components);
     graphObject.GraphCalculator();
   }
   changeInstrument(id, newInstrumentNumber) {
@@ -625,9 +625,11 @@ class InputBox extends React.Component { // where we type in the function and cl
               <div key={comp}>
                 <p>{comp}</p>
                 <Input components={this.props.components} id={comp} />
+
+
                 <label>Domain</label>
 
-
+                <MuteButton audioSourceID={comp} components={this.props.components} />
                 {
                   <ReactSlider
                     defaultValue={[-1000, 1000]}
@@ -798,19 +800,20 @@ class TBB extends React.Component {
 }
 
 class MuteButton extends React.Component {
-  constructor() {
-    super()
+  constructor(props) {
+    super(props)
     this.handleChange = this.handleChange.bind(this)
   }
 
 
   handleChange(e) {
+    let idIndex = this.props.components.findIndex(el => el === this.props.audioSourceID);
 
     if (e.target.checked === true) {
-      muteToggle = false;
+      timingGraphObject.audioSources[idIndex].changeMuteToggle(false)
     }
     else {
-      muteToggle = true;
+      timingGraphObject.audioSources[idIndex].changeMuteToggle(true)
 
     }
 
@@ -901,13 +904,11 @@ class Graphs extends React.Component {
       let curPointDist = Math.hypot(this.pointerEventArray[0].clientX - this.pointerEventArray[1].clientX, this.pointerEventArray[0].clientY - this.pointerEventArray[1].clientY);
       if (this.prevPointDist > 0) {
         if (curPointDist > this.prevPointDist) {
-          console.log("zoom in")
 
           graphObject.Scale(0.99);
 
         }
         else if (curPointDist < this.prevPointDist) {
-          console.log("zoom out")
 
           graphObject.Scale(1.01);
 
@@ -1010,9 +1011,9 @@ class App extends React.PureComponent {
 
       <div>
         <Container fluid className="bg">
-          <Nav className="topbar bg ">
+          <Nav fill className="topbar bg justify-content-left">
 
-            <Nav.Item href="#help" className="text-white">Help</Nav.Item>
+
             <Nav.Item>
 
               <BPS />
@@ -1023,11 +1024,9 @@ class App extends React.PureComponent {
               <TBB />
 
             </Nav.Item>
-            <Nav.Item>
 
-              <MuteButton />
 
-            </Nav.Item>
+
 
 
           </Nav>
