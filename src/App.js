@@ -637,7 +637,7 @@ class InputBox extends React.Component { // where we type in the function and cl
                     min={-1000}
                     renderThumb={(props, state) => <div {...props}>{state.valueNow}</div>}
                     onAfterChange={val => { this.handleChangeDomain(comp, val); }}
-                    className="horizontal-slider"
+                    className="horizontal-slider-twohandle"
                     thumbClassName="sliderThumb"
                     trackClassName="sliderTrack"
                     pearling={true}
@@ -738,9 +738,9 @@ class BPS extends React.Component {
 
   }
 
-  handleChangeBPS(e) {
-    this.setState({ value: e.target.value });
-    timingGraphObject.beatsPerScreen = e.target.value;
+  handleChangeBPS(newVal) {
+    this.setState({ value: newVal });
+    timingGraphObject.beatsPerScreen = newVal;
 
   }
 
@@ -752,8 +752,19 @@ class BPS extends React.Component {
         <Form.Group >
           <Form.Label>Beats per screen</Form.Label>
 
-          <Form.Control onChange={this.handleChangeBPS} type="range" min="1" max="100" step="1"></Form.Control>
-          <Form.Label>{this.state.value}</Form.Label>
+
+          <ReactSlider
+            defaultValue={this.state.value}
+            max={100}
+            min={1}
+            renderThumb={(props, state) => <div {...props}>{state.value}</div>}
+            onChange={val => { this.handleChangeBPS(val); }}
+            className="horizontal-slider-onehandle"
+            thumbClassName="sliderThumb"
+            trackClassName="sliderTrack"
+
+
+          />
 
         </Form.Group>
 
@@ -770,12 +781,12 @@ class TBB extends React.Component {
     super()
 
     this.handleChangeTBB = this.handleChangeTBB.bind(this);
-    this.state = { value: 600 };
+    this.state = { value: 500 };
   }
 
-  handleChangeTBB(e) {
-    this.setState({ value: e.target.value });
-    timingGraphObject.timeBetweenBeats = e.target.value;
+  handleChangeTBB(newVal) {
+    this.setState({ value: newVal });
+    timingGraphObject.timeBetweenBeats = newVal;
 
   }
 
@@ -786,8 +797,19 @@ class TBB extends React.Component {
         <Form.Group >
           <Form.Label>Time between beats</Form.Label>
 
-          <Form.Control onChange={this.handleChangeTBB} type="range" min="100" max="1000" step="100"></Form.Control>
-          <Form.Label>{this.state.value / 1000}s</Form.Label>
+          <ReactSlider
+            defaultValue={this.state.value}
+            max={1000}
+            min={100}
+            renderThumb={(props, state) => <div {...props}>{state.value / 1000 + "s"}</div>}
+            onChange={val => { this.handleChangeTBB(val); }}
+            className="horizontal-slider-onehandle"
+            step={100}
+            thumbClassName="sliderThumb"
+            trackClassName="sliderTrack"
+
+
+          />
         </Form.Group>
 
       </Form>
@@ -1011,7 +1033,7 @@ class App extends React.PureComponent {
 
       <div>
         <Container fluid className="bg">
-          <Nav fill className="topbar bg justify-content-left">
+          <Nav fill className="topbar bg ">
 
 
             <Nav.Item>

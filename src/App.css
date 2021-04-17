@@ -1,17 +1,24 @@
-.sliderTrack{
-    width: 5vw;
-    height: 25px;
-    
-}
+
 .sliderThumb{
-    color: black;
-    background-color: slategrey;
+    color:#000D34 ;
+    background-color: #56DACC;
+    border-radius: 15px;
+
 
 }
-.horizontal-slider{
+.horizontal-slider-twohandle{
     width: 100%;
     height: 25px;
-    background-color: grey;
+    
+    background-color: #2F2980;
+}
+.horizontal-slider-onehandle{
+    width: 80%;
+    height: 24px ;
+    margin: auto;
+    background-color: #FFFFFF;
+    border-radius: 15px;
+
 }
 
 
