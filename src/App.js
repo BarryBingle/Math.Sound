@@ -37,7 +37,7 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
 
     this.plotsPerScreen = 750; //TODO allow this to change for different processor strengths
     this.numGrids = 20; // number of grid markings
-    this.expressions = [{ expr: "", domain: [-1000, 1000], colour: "#000000", verticalAsymptotes: null }]; // array of objects that gets all info about a certain expression colour, value and domains. Initialised with empty graph
+    this.expressions = [new expressionConstructor("0", [-1000, 1000], "#000000")]; // array of objects that gets all info about a certain expression colour, value and domains. Initialised with empty graph
 
     this.scaleColour = "#000D34";
 
@@ -190,7 +190,7 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
   }
   ,
 
-  GraphCalculator: function () { // drawing your own graphs - doesn't work well when asymptotes but oh well
+  GraphCalculator: function () { // drawing your own graphs 
     pointsPlotted = 0;
     this.ClearAll();
     this.DrawAxes();
@@ -259,11 +259,11 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
 
 
         }
-        console.log(pointsPlotted);
+        // console.log(pointsPlotted);
 
         graphContext.stroke();
         this.pointInterval = prevPointInterval;
-        console.log(this.pointInterval);
+        // console.log(this.pointInterval);
 
       }
 
@@ -418,65 +418,67 @@ let timingGraphObject = {
     this.beat = 1;
     this.audioSources = [new audioSource()]; // default first instrument/graph
     this.timer = 0;
+    this.audioSourcesToPlay = [];
+    this.CalculateNextNote();
 
 
   },
-  MoveTimerBar: function () {
+  CalculateNextNote() {
+    this.timer = setTimeout(() => {
+      this.MoveTimerBarAndPlay();
+    }, this.timeBetweenBeats);
 
 
     if (this.beat >= this.beatsPerScreen) {
       this.beat = 1;
     }
-    timingContext.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
-
-
-
-
-    timingContext.beginPath();
-    timingContext.moveTo(graphCanvas.width / this.beatsPerScreen * this.beat, 0);
-    timingContext.lineTo(graphCanvas.width / this.beatsPerScreen * this.beat, graphCanvas.height);
-    timingContext.stroke();
-
 
     this.beat++;
     let timerBarPosition = Math.round(graphObject.lowerLimitX + (graphObject.upperLimitX - graphObject.lowerLimitX) / this.beatsPerScreen * (this.beat - 1))
 
     for (let i = 0; i < this.audioSources.length; i++) {
       if (graphObject.expressions[i].validity === true && timerBarPosition >= graphObject.expressions[i].domain[0] && timerBarPosition <= graphObject.expressions[i].domain[1] && this.audioSources[i].muteToggle === false) {
-        let newFreq = graphObject.calculate(Math.round(graphObject.lowerLimitX + (graphObject.upperLimitX - graphObject.lowerLimitX) / this.beatsPerScreen * (this.beat - 1)), graphObject.expressions[i].expr);
+        let newFreq = graphObject.calculate(timerBarPosition, graphObject.expressions[i].expr);
 
-
+        this.audioSourcesToPlay.push(this.audioSources[i]);
         if (newFreq <= -12000) {// todo maybe display frequency too high?
           this.audioSources[i].changeFrequency(-12000);
-          this.audioSources[i].play();
 
         }
         else if (newFreq >= 12000) {
           this.audioSources[i].changeFrequency(12000);
-          this.audioSources[i].play();
 
 
         }
         else if (isNaN(newFreq) === false) {
           this.audioSources[i].changeFrequency(newFreq);
-          this.audioSources[i].play();
 
 
         }
 
-
-
       }
     }
-    this.timer = setTimeout(() => {
-      this.MoveTimerBar();
-    }, this.timeBetweenBeats);
 
 
+
+  },
+  MoveTimerBarAndPlay() {
+    timingContext.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+
+    timingContext.beginPath();
+    timingContext.moveTo(graphCanvas.width / this.beatsPerScreen * this.beat, 0);
+    timingContext.lineTo(graphCanvas.width / this.beatsPerScreen * this.beat, graphCanvas.height);
+    timingContext.stroke();
+
+    for (let i = 0; i < this.audioSourcesToPlay.length; i++) {
+      timingGraphObject.audioSourcesToPlay[i].play();
+    }
+    this.audioSourcesToPlay = [];
+
+
+    this.CalculateNextNote();
   }
-
 }
-
 //#endregion
 
 //#region Audio
@@ -874,6 +876,8 @@ class Graphs extends React.Component {
     this.pointerEventArray = [];
     this.prevPointDist = -1;
     this.dragging = false
+    this.timesPerSecond = 60;
+    this.waiting = false;
 
     this.handleMouseDown = this.handleMouseDown.bind(this);
     this.handleMouseMove = this.handleMouseMove.bind(this);
@@ -914,42 +918,56 @@ class Graphs extends React.Component {
     }
   }
   handleMouseMove(e) {
-    e.persist();
-    for (let i = 0; i < this.pointerEventArray.length; i++) { // for handling a pinch gesture
-      if (e.pointerId === this.pointerEventArray[i].pointerId) {
-        this.pointerEventArray[i] = e;
-        break;
-      }
-    }
 
-    if (this.pointerEventArray.length == 2) {
-      let curPointDist = Math.hypot(this.pointerEventArray[0].clientX - this.pointerEventArray[1].clientX, this.pointerEventArray[0].clientY - this.pointerEventArray[1].clientY);
-      if (this.prevPointDist > 0) {
-        if (curPointDist > this.prevPointDist) {
+    if (this.waiting === false && this.dragging === true) { // throttling
 
-          graphObject.Scale(0.99);
 
-        }
-        else if (curPointDist < this.prevPointDist) {
+      e.persist();
+      for (let i = 0; i < this.pointerEventArray.length; i++) { // for handling a pinch gesture
+        if (e.pointerId === this.pointerEventArray[i].pointerId) {
+          this.pointerEventArray[i] = e;
 
-          graphObject.Scale(1.01);
-
+          break;
         }
       }
 
+      if (this.pointerEventArray.length == 2) {
+        let curPointDist = Math.hypot(this.pointerEventArray[0].clientX - this.pointerEventArray[1].clientX, this.pointerEventArray[0].clientY - this.pointerEventArray[1].clientY);
+        if (this.prevPointDist > 0) {
+          if (curPointDist > this.prevPointDist) {
 
-      this.prevPointDist = curPointDist;
-      return;
+            graphObject.Scale(0.99);
 
-    }
+          }
+          else if (curPointDist < this.prevPointDist) {
 
-    if (this.dragging === true) {
-      graphObject.ShiftGraph(e.clientX - this.dragCoords.x, (this.dragCoords.y - e.clientY));
-    }
+            graphObject.Scale(1.01);
 
-    this.dragCoords = {
-      x: e.clientX,
-      y: e.clientY
+          }
+        }
+
+
+        this.prevPointDist = curPointDist;
+        return;
+
+      }
+
+      if (this.dragging === true) {
+        graphObject.ShiftGraph(e.clientX - this.dragCoords.x, (this.dragCoords.y - e.clientY));
+
+        this.dragCoords = {
+          x: e.clientX,
+          y: e.clientY
+        }
+      }
+
+
+
+      this.waiting = true;
+      setTimeout(function () {
+        this.waiting = false;
+      }.bind(this), 1000 / this.timesPerSecond);
+
     }
 
   }
@@ -1024,7 +1042,6 @@ class App extends React.PureComponent {
     graphObject.Setup();
     graphObject.DrawAxes();
     timingGraphObject.Setup();
-    timingGraphObject.MoveTimerBar();
   }
   render() {
 
