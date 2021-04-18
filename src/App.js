@@ -434,12 +434,11 @@ let timingGraphObject = {
     }
 
     this.beat++;
-    let timerBarPosition = Math.round(graphObject.lowerLimitX + (graphObject.upperLimitX - graphObject.lowerLimitX) / this.beatsPerScreen * (this.beat - 1))
+    let timerBarPosition = Math.round(graphObject.lowerLimitX + (graphObject.upperLimitX - graphObject.lowerLimitX) / this.beatsPerScreen * (this.beat))
 
     for (let i = 0; i < this.audioSources.length; i++) {
       if (graphObject.expressions[i].validity === true && timerBarPosition >= graphObject.expressions[i].domain[0] && timerBarPosition <= graphObject.expressions[i].domain[1] && this.audioSources[i].muteToggle === false) {
         let newFreq = graphObject.calculate(timerBarPosition, graphObject.expressions[i].expr);
-        console.log(graphObject.expressions[i])
         this.audioSourcesToPlay.push(this.audioSources[i]);
         if (newFreq <= -12000) {// todo maybe display frequency too high?
           this.audioSources[i].changeFrequency(-12000);
@@ -488,7 +487,7 @@ let instrumentList = new Instruments().names;
 class audioSource {
   constructor() {
 
-    this.instrumentNumber = 1; // default
+    this.instrumentNumber = 0; // default
     this.frequency = 0;
     this.player = new Instruments();
     this.muteToggle = true;
@@ -497,6 +496,7 @@ class audioSource {
   }
   play() {
     if (this.muteToggle === false) {
+      console.log(this.instrumentNumber, this.frequency)
       this.player.play(this.instrumentNumber, this.frequency, 1, 0, 0.5)
 
 
@@ -544,7 +544,7 @@ class AllInputs extends React.Component {
       this.lastColourPicked++;
 
     }
-    timingGraphObject.audioSources.pop(new audioSource())
+    timingGraphObject.audioSources.push(new audioSource())
     this.setState({ components: prevState });
   }
 
@@ -590,7 +590,6 @@ class InputBox extends React.Component { // where we type in the function and cl
     super(props)
     this.handleChangeDomain = this.handleChangeDomain.bind(this);
     this.handleCreate = this.handleCreate.bind(this);
-    this.handleChangeInstrument = this.handleChangeInstrument.bind(this);
     this.handleDeleteFunction = this.handleDelete.bind(this);
 
 
@@ -602,11 +601,7 @@ class InputBox extends React.Component { // where we type in the function and cl
   handleDelete(id) {
     this.props.deleteFunction(id);
   }
-  handleChangeInstrument(id) {
-    let newAudioType = document.getElementById(id + "audioType").value;
-    this.props.changeInstrumentFunction(id, newAudioType);
 
-  }
   handleChangeDomain(id, newValue) {
 
     this.props.changeDomainFunction(id, newValue);
@@ -624,7 +619,7 @@ class InputBox extends React.Component { // where we type in the function and cl
             this.props.components.map(comp =>
               <ListGroup.Item className="ListGroupItem" >
                 <div key={comp}>
-
+                  <p>{comp}</p>
                   <Input components={this.props.components} id={comp} deleteFunction={this.handleDeleteFunction} />
 
 
@@ -645,18 +640,7 @@ class InputBox extends React.Component { // where we type in the function and cl
 
                     />
                   }
-
-                  <select id={comp + "audioType"} onChange={this.handleChangeInstrument.bind(this, comp)}>
-                    {
-                      instrumentList.map((name, index) => {
-                        if (index <= 127) {
-                          return <option key={index} value={index}>{name}</option>
-
-                        }
-                      })
-                    }
-                  </select>
-
+                  <InstrumentChooser id={comp} changeInstrumentFunction={this.props.changeInstrumentFunction} />
 
                 </div>
               </ListGroup.Item>
@@ -665,13 +649,46 @@ class InputBox extends React.Component { // where we type in the function and cl
 
           }
         </ListGroup>
-        <Button className="newFunctionButton" variant="dark" onClick={this.handleCreate.bind(this)}>{<i class="fa fa-plus" aria-hidden="true"></i>}</Button>
+        <Button className="newFunctionButton" variant="dark" onClick={this.handleCreate.bind(this)}>{<i className="fa fa-plus" aria-hidden="true"></i>}</Button>
       </div>
 
     )
   }
 
 }
+class InstrumentChooser extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+
+  }
+  handleChange() {
+
+    let newAudioType = document.getElementById(this.props.id + "audioType").value;
+    this.props.changeInstrumentFunction(this.props.id, newAudioType);
+    console.log(newAudioType)
+
+  }
+  render() {
+    return (
+      <Form.Control as="select" onChange={this.handleChange} id={this.props.id + "audioType"}>
+        {
+          instrumentList.map((name, index) => {
+            if (index <= 127) {
+              return <option key={index} value={index}>{name}</option>
+
+            }
+          })
+        }
+      </Form.Control>
+
+
+
+    )
+  }
+
+}
+
 class Input extends React.Component {
   constructor(props) {
     super(props);
@@ -720,11 +737,9 @@ class Input extends React.Component {
           onChange={this.handleChange}
         />
 
-        <MuteButton audioSourceID={this.props.id} components={this.props.components} />
+        <MuteButton id={this.props.id} components={this.props.components} />
 
-        <DeleteButton id={this.props.id} components={this.props.components} deleteFunction={this.props.deleteFunction} />
-
-
+        <DeleteButton id={this.props.id} deleteFunction={this.props.deleteFunction} />
 
       </InputGroup >
 
@@ -745,7 +760,7 @@ class DeleteButton extends React.Component {
 
       <InputGroup.Append>
 
-        <Button variant="outline-dark" onClick={this.handleClick}>{<i class="fa fa-times" aria-hidden="true"></i>}</Button>
+        <Button variant="outline-dark" onClick={this.handleClick}>{<i className="fa fa-times" aria-hidden="true"></i>}</Button>
 
       </InputGroup.Append>
 
@@ -765,7 +780,9 @@ class MuteButton extends React.Component {
 
 
   handleChange() {
-    let idIndex = this.props.components.findIndex(el => el === this.props.audioSourceID);
+    let idIndex = this.props.components.findIndex(el => el === this.props.id);
+    console.log(idIndex, this.props.components, this.props.id)
+    console.log("audio: ", timingGraphObject.audioSources)
 
     if (this.state.isMuted === true) {
       timingGraphObject.audioSources[idIndex].changeMuteToggle(false) // not muted
