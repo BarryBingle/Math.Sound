@@ -1,35 +1,51 @@
 
 .label{
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 1.5rem;
-    color: #56DACC;
+    font-size: 1rem;
+    color: #ffffff;
     
+}
+.Slider{
+    background-color: #343a40;
+    border: 0.2rem solid #000d34;
+    border-radius: .25rem;
 }
 .sliderThumb{
     color:#000D34 ;
     font-family: Arial, Helvetica, sans-serif;
     background-color: #56DACC;
-    border-radius: 15px;
-    width:50px
+    width:50px;
+    border-radius: .25rem;
+
+
+}
+.sliderThumbTwoHandle{
+    color:#000D34 ;
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #56DACC;
+    width:50px;
+    text-align: center;
 
 }
 .horizontal-slider-twohandle{
-    width: 100%;
-    background-color: #2F2980;
-    height: 24px ;
-    margin: auto;
-    border-radius: 15px;
+    background-color: #343a40;
+    height: 24px;
+    margin-top:10px;
+    margin-bottom:10px;
+
+
 }
 .horizontal-slider-onehandle{
+    bottom:6px;
     width: 40vw;
     height: 24px ;
     margin: auto;
-    background-color: #FFFFFF;
-    border-radius: 15px;
-
+    background-color: #ffffff;
+    border-radius: .25rem;
 }
 .list-group-item{
     border: 1px solid #2F2980 !important; 
+    
 }
 .muteButton{
     display: inline-block;

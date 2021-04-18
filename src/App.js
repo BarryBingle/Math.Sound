@@ -496,7 +496,6 @@ class audioSource {
   }
   play() {
     if (this.muteToggle === false) {
-      console.log(this.instrumentNumber, this.frequency)
       this.player.play(this.instrumentNumber, this.frequency, 1, 0, 0.5)
 
 
@@ -619,13 +618,7 @@ class InputBox extends React.Component { // where we type in the function and cl
             this.props.components.map(comp =>
               <ListGroup.Item className="ListGroupItem" >
                 <div key={comp}>
-                  <p>{comp}</p>
                   <Input components={this.props.components} id={comp} deleteFunction={this.handleDeleteFunction} />
-
-
-
-                  <label>Domain</label>
-
                   {
                     <ReactSlider
                       defaultValue={[-1000, 1000]}
@@ -634,7 +627,7 @@ class InputBox extends React.Component { // where we type in the function and cl
                       renderThumb={(props, state) => <div {...props}>{state.valueNow}</div>}
                       onAfterChange={val => { this.handleChangeDomain(comp, val); }}
                       className="horizontal-slider-twohandle"
-                      thumbClassName="sliderThumb"
+                      thumbClassName="sliderThumbTwoHandle"
                       trackClassName="sliderTrack"
                       pearling={true}
 
@@ -781,8 +774,6 @@ class MuteButton extends React.Component {
 
   handleChange() {
     let idIndex = this.props.components.findIndex(el => el === this.props.id);
-    console.log(idIndex, this.props.components, this.props.id)
-    console.log("audio: ", timingGraphObject.audioSources)
 
     if (this.state.isMuted === true) {
       timingGraphObject.audioSources[idIndex].changeMuteToggle(false) // not muted
@@ -844,7 +835,7 @@ class BPS extends React.Component {
     return (
 
       <Form>
-        <Form.Group >
+        <Form.Group className="Slider">
           <Form.Label className="label">Beats Per Screen</Form.Label>
 
 
@@ -889,7 +880,7 @@ class TBB extends React.Component {
     return (
 
       <Form>
-        <Form.Group >
+        <Form.Group className="Slider">
           <Form.Label className="label">Time Between Beats</Form.Label>
 
           <ReactSlider
@@ -1108,8 +1099,7 @@ class App extends React.PureComponent {
 
       <div>
         <Container fluid className="bg">
-          <Nav fill className="topbar bg ">
-
+          <Nav fill className="topbar ">
 
             <Nav.Item>
 
@@ -1121,10 +1111,6 @@ class App extends React.PureComponent {
               <TBB />
 
             </Nav.Item>
-
-
-
-
 
           </Nav>
 
