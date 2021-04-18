@@ -752,7 +752,7 @@ class BPS extends React.Component {
 
       <Form>
         <Form.Group >
-          <Form.Label>Beats per screen</Form.Label>
+          <Form.Label className="label">Beats Per Screen</Form.Label>
 
 
           <ReactSlider
@@ -797,7 +797,7 @@ class TBB extends React.Component {
 
       <Form>
         <Form.Group >
-          <Form.Label>Time between beats</Form.Label>
+          <Form.Label className="label">Time Between Beats</Form.Label>
 
           <ReactSlider
             defaultValue={this.state.value}
@@ -931,7 +931,7 @@ class Graphs extends React.Component {
         }
       }
 
-      if (this.pointerEventArray.length == 2) {
+      if (this.pointerEventArray.length === 2) {
         let curPointDist = Math.hypot(this.pointerEventArray[0].clientX - this.pointerEventArray[1].clientX, this.pointerEventArray[0].clientY - this.pointerEventArray[1].clientY);
         if (this.prevPointDist > 0) {
           if (curPointDist > this.prevPointDist) {
@@ -974,7 +974,7 @@ class Graphs extends React.Component {
   handleMouseUp(e) {
     e.persist();
     for (let i = 0; i < this.pointerEventArray.length; i++) {
-      if (this.pointerEventArray[i].pointerId == e.pointerId) {
+      if (this.pointerEventArray[i].pointerId === e.pointerId) {
         this.pointerEventArray.splice(i, 1);
         break;
       }
