@@ -4,7 +4,7 @@ import './App.css';
 import { derivative, parse } from 'mathjs';
 import ReactSlider from 'react-slider';
 import { create, all } from 'mathjs';
-import { Col, Container, ListGroup, Row, Nav, Form } from 'react-bootstrap';
+import { Col, Container, ListGroup, Row, Nav, Form, FormControl, InputGroup, Button } from 'react-bootstrap';
 
 //#region Graph Actions
 
@@ -625,7 +625,7 @@ class InputBox extends React.Component { // where we type in the function and cl
             <ListGroup.Item >
 
               <div key={comp}>
-                <p>{comp}</p>
+
                 <Input components={this.props.components} id={comp} />
 
 
@@ -717,14 +717,22 @@ class Input extends React.Component {
 
   render() {
     return (
-      <div>
-        <div>
-          <input onChange={this.handleChange} type="text" value={this.state.text}></input>
-        </div>
-        <div>
-          <button onClick={this.handleClear}>Clear</button>
-        </div>
-      </div>
+      <InputGroup>
+        <FormControl
+
+          placeholder="Enter function e.g 3x + 70"
+          type="text"
+          value={this.state.text}
+          onChange={this.handleChange}
+        />
+        <InputGroup.Append>
+
+          <Button variant="outline-dark" onClick={this.handleClear}>Clear</Button>
+
+        </InputGroup.Append>
+
+      </InputGroup>
+
 
     )
   }
