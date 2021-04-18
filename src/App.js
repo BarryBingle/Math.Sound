@@ -89,7 +89,6 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
 
   },
   ExpressionValidifier(exprText, idIndex) { // checks expression before making calculations to avoid wasting resources
-    graphObject.expressions[idIndex].validity = false;
     let exprObject;
 
     try { // first test is to try and parse the expression
@@ -151,6 +150,7 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
         if (operatorNodes[i].isUnary()) { // protests from x! as no negative factorials allowed
           if (operatorNodes[i].args[0].isSymbolNode) {
             console.log("non acceptable operation found")
+
             return false;
           }
 
@@ -162,9 +162,9 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
 
 
     //tests passed, expression valid
+
     // get the derivative as well and add it as a property
 
-    graphObject.expressions[idIndex].validity = true;
     try {
       graphObject.expressions[idIndex].derivative = derivative(exprObject, "x").toString();
 
@@ -172,6 +172,8 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
     catch {
       console.log("derivative couldn't be found")
     }
+
+
 
     return true
 
@@ -397,7 +399,6 @@ class expressionConstructor {
     this.expr = expr;
     this.domain = domain
     this.colour = colour
-    this.verticalAsymptotes = null;
   }
 
 }
@@ -439,7 +440,7 @@ let timingGraphObject = {
     for (let i = 0; i < this.audioSources.length; i++) {
       if (graphObject.expressions[i].validity === true && timerBarPosition >= graphObject.expressions[i].domain[0] && timerBarPosition <= graphObject.expressions[i].domain[1] && this.audioSources[i].muteToggle === false) {
         let newFreq = graphObject.calculate(timerBarPosition, graphObject.expressions[i].expr);
-
+        console.log(graphObject.expressions[i])
         this.audioSourcesToPlay.push(this.audioSources[i]);
         if (newFreq <= -12000) {// todo maybe display frequency too high?
           this.audioSources[i].changeFrequency(-12000);
@@ -483,7 +484,6 @@ let timingGraphObject = {
 
 //#region Audio
 
-let muteToggle = true;
 let instrumentList = new Instruments().names;
 
 class audioSource {
@@ -623,15 +623,14 @@ class InputBox extends React.Component { // where we type in the function and cl
         {
           this.props.components.map(comp =>
             <ListGroup.Item >
-
               <div key={comp}>
 
                 <Input components={this.props.components} id={comp} />
 
 
+
                 <label>Domain</label>
 
-                <MuteButton audioSourceID={comp} components={this.props.components} />
                 {
                   <ReactSlider
                     defaultValue={[-1000, 1000]}
@@ -697,13 +696,23 @@ class Input extends React.Component {
 
   }
   handleChange(e) {
+
+
     this.setState({ text: e.target.value });
+
     let idIndex = this.props.components.findIndex(el => el === this.props.id);
     graphObject.expressions[idIndex].expr = e.target.value;
-    if (graphObject.ExpressionValidifier(e.target.value, idIndex) === true) {
-
+    graphObject.expressions[idIndex].validity = false;
+    if (e.target.value === "") {
+      graphObject.expressions[idIndex].expr = "";
+      graphObject.expressions[idIndex].validity = false;
       graphObject.GraphCalculator();
     }
+    else if (graphObject.ExpressionValidifier(e.target.value, idIndex) === true) {
+      graphObject.expressions[idIndex].validity = true;
+      graphObject.GraphCalculator();
+    }
+
 
   }
   handleClear() {
@@ -725,11 +734,14 @@ class Input extends React.Component {
           value={this.state.text}
           onChange={this.handleChange}
         />
+
+        <MuteButton audioSourceID={this.props.id} components={this.props.components} />
         <InputGroup.Append>
 
           <Button variant="outline-dark" onClick={this.handleClear}>Clear</Button>
 
         </InputGroup.Append>
+
 
       </InputGroup>
 
@@ -835,17 +847,22 @@ class MuteButton extends React.Component {
   constructor(props) {
     super(props)
     this.handleChange = this.handleChange.bind(this)
+    this.state = { iconToShow: "fas fa-volume-mute", isMuted: true };
+
+
   }
 
 
-  handleChange(e) {
+  handleChange() {
     let idIndex = this.props.components.findIndex(el => el === this.props.audioSourceID);
 
-    if (e.target.checked === true) {
-      timingGraphObject.audioSources[idIndex].changeMuteToggle(false)
+    if (this.state.isMuted === true) {
+      timingGraphObject.audioSources[idIndex].changeMuteToggle(false) // not muted
+      this.setState({ iconToShow: "fas fa-volume-up", isMuted: false });
     }
     else {
-      timingGraphObject.audioSources[idIndex].changeMuteToggle(true)
+      timingGraphObject.audioSources[idIndex].changeMuteToggle(true) // muted
+      this.setState({ iconToShow: "fas fa-volume-mute", isMuted: true });
 
     }
 
@@ -855,15 +872,21 @@ class MuteButton extends React.Component {
     return (
 
 
-      <Form>
-        <Form.Group >
-          <Form.Label>Enable Audio</Form.Label>
+      <InputGroup.Append>
 
-          <Form.Control onChange={this.handleChange} type="checkbox" ></Form.Control>
 
-        </Form.Group>
+        <Button
+          variant="outline-dark"
 
-      </Form>
+
+          onClick={this.handleChange}
+        >
+          {<i className={this.state.iconToShow}></i>}
+        </Button>
+
+
+
+      </InputGroup.Append>
 
 
     )
