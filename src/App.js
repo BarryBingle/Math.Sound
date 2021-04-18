@@ -37,7 +37,6 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
 
     this.plotsPerScreen = 750; //TODO allow this to change for different processor strengths
     this.numGrids = 20; // number of grid markings
-    this.expressions = [new expressionConstructor("0", [-1000, 1000], "#000000")]; // array of objects that gets all info about a certain expression colour, value and domains. Initialised with empty graph
 
     this.scaleColour = "#000D34";
 
@@ -530,13 +529,22 @@ class AllInputs extends React.Component {
     super()
     this.state = { components: [0] };
     this.IDCount = 0;
+    this.possibleColourArray = ["#2F2980", "#0476D9", "#56DACC", "#8C186D", "#F23535", "#ffffff"]
+    this.lastColourPicked = 0;
   }
   create(id) {
     let prevState = this.state.components;
     this.IDCount++;
     let idIndex = prevState.findIndex(el => el === id);
     prevState.splice(idIndex + 1, 0, this.IDCount)
-    graphObject.expressions.splice(idIndex + 1, 0, new expressionConstructor("", [-1000, 1000], "#000000"))
+    graphObject.expressions.splice(idIndex + 1, 0, new expressionConstructor("", [-1000, 1000], this.possibleColourArray[this.lastColourPicked]));
+    if (this.lastColourPicked === 4) {
+      this.lastColourPicked = 0;
+
+    } else {
+      this.lastColourPicked++;
+
+    }
     timingGraphObject.audioSources.splice(idIndex + 1, 0, new audioSource())
     this.setState({ components: prevState });
   }
@@ -561,18 +569,14 @@ class AllInputs extends React.Component {
     graphObject.GraphCalculator();
 
   }
-  changeColour(id, newColour) {
-    let idIndex = this.state.components.findIndex(el => el === id);
-    graphObject.expressions[idIndex].colour = newColour;
-    graphObject.GraphCalculator();
-  }
+
 
   render() {
     return (
 
       <InputBox components={this.state.components} deleteFunction={this.delete.bind(this)}
         createFunction={this.create.bind(this)} changeInstrumentFunction={this.changeInstrument.bind(this)} changeDomainFunction={this.changeDomain.bind(this)}
-        changeColourFunction={this.changeColour.bind(this)} />
+      />
 
 
 
@@ -586,7 +590,6 @@ class InputBox extends React.Component { // where we type in the function and cl
   constructor(props) {
     super(props)
     this.handleChangeDomain = this.handleChangeDomain.bind(this);
-    this.handleChangeColour = this.handleChangeColour.bind(this);
     this.handleCreate = this.handleCreate.bind(this);
     this.handleChangeInstrument = this.handleChangeInstrument.bind(this);
 
@@ -610,9 +613,7 @@ class InputBox extends React.Component { // where we type in the function and cl
     this.props.changeDomainFunction(id, newValue);
 
   }
-  handleChangeColour(id, newColour) {
-    this.props.changeColourFunction(id, newColour.target.value);
-  }
+
 
 
   render() {
@@ -653,9 +654,6 @@ class InputBox extends React.Component { // where we type in the function and cl
                 }
 
 
-                <input type="color" onChange={this.handleChangeColour.bind(this, comp)}></input>
-
-
 
                 <select id={comp + "audioType"} onChange={this.handleChangeInstrument.bind(this, comp)}>
                   {
@@ -693,23 +691,26 @@ class Input extends React.Component {
 
     this.handleChange = this.handleChange.bind(this);
     this.handleClear = this.handleClear.bind(this);
+    this.idIndex = this.props.components.findIndex(el => el === this.props.id);
+    this.colour = graphObject.expressions[this.idIndex].colour;
 
   }
+
   handleChange(e) {
 
 
     this.setState({ text: e.target.value });
 
-    let idIndex = this.props.components.findIndex(el => el === this.props.id);
-    graphObject.expressions[idIndex].expr = e.target.value;
-    graphObject.expressions[idIndex].validity = false;
+
+    graphObject.expressions[this.idIndex].expr = e.target.value;
+    graphObject.expressions[this.idIndex].validity = false;
     if (e.target.value === "") {
-      graphObject.expressions[idIndex].expr = "";
-      graphObject.expressions[idIndex].validity = false;
+      graphObject.expressions[this.idIndex].expr = "";
+      graphObject.expressions[this.idIndex].validity = false;
       graphObject.GraphCalculator();
     }
-    else if (graphObject.ExpressionValidifier(e.target.value, idIndex) === true) {
-      graphObject.expressions[idIndex].validity = true;
+    else if (graphObject.ExpressionValidifier(e.target.value, this.idIndex) === true) {
+      graphObject.expressions[this.idIndex].validity = true;
       graphObject.GraphCalculator();
     }
 
@@ -717,9 +718,8 @@ class Input extends React.Component {
   }
   handleClear() {
     this.setState({ text: "" });
-    let idIndex = this.props.components.findIndex(el => el === this.props.id);
-    graphObject.expressions[idIndex].expr = "";
-    graphObject.expressions[idIndex].validity = false;
+    graphObject.expressions[this.idIndex].expr = "";
+    graphObject.expressions[this.idIndex].validity = false;
     graphObject.GraphCalculator();
   }
 
@@ -727,7 +727,10 @@ class Input extends React.Component {
   render() {
     return (
       <InputGroup>
-        <FormControl
+        <InputGroup.Prepend>
+          <InputGroup.Text style={{ backgroundColor: this.colour }}> </InputGroup.Text>
+        </InputGroup.Prepend>
+        <Form.Control
 
           placeholder="Enter function e.g 3x + 70"
           type="text"
@@ -743,7 +746,7 @@ class Input extends React.Component {
         </InputGroup.Append>
 
 
-      </InputGroup>
+      </InputGroup >
 
 
     )
@@ -1068,8 +1071,13 @@ class Graphs extends React.Component {
   }
 }
 class App extends React.PureComponent {
-  componentDidMount() {
+  constructor(props) {
+    super(props);
+    graphObject.expressions = [new expressionConstructor("0", [-1000, 1000], "#000000")]; // array of objects that gets all info about a certain expression colour, value and domains.
+    // initialised here so component in charge of displaying colour will know what's going on
 
+  }
+  componentDidMount() {
     graphObject.Setup();
     graphObject.DrawAxes();
     timingGraphObject.Setup();
