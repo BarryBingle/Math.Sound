@@ -532,12 +532,11 @@ class AllInputs extends React.Component {
     this.possibleColourArray = ["#2F2980", "#0476D9", "#56DACC", "#8C186D", "#F23535", "#ffffff"]
     this.lastColourPicked = 0;
   }
-  create(id) {
+  create() {
     let prevState = this.state.components;
     this.IDCount++;
-    let idIndex = prevState.findIndex(el => el === id);
-    prevState.splice(idIndex + 1, 0, this.IDCount)
-    graphObject.expressions.splice(idIndex + 1, 0, new expressionConstructor("", [-1000, 1000], this.possibleColourArray[this.lastColourPicked]));
+    prevState.push(this.IDCount)
+    graphObject.expressions.push(new expressionConstructor("", [-1000, 1000], this.possibleColourArray[this.lastColourPicked]));
     if (this.lastColourPicked === 4) {
       this.lastColourPicked = 0;
 
@@ -545,7 +544,7 @@ class AllInputs extends React.Component {
       this.lastColourPicked++;
 
     }
-    timingGraphObject.audioSources.splice(idIndex + 1, 0, new audioSource())
+    timingGraphObject.audioSources.pop(new audioSource())
     this.setState({ components: prevState });
   }
 
@@ -592,7 +591,7 @@ class InputBox extends React.Component { // where we type in the function and cl
     this.handleChangeDomain = this.handleChangeDomain.bind(this);
     this.handleCreate = this.handleCreate.bind(this);
     this.handleChangeInstrument = this.handleChangeInstrument.bind(this);
-
+    this.handleDeleteFunction = this.handleDelete.bind(this);
 
 
   }
@@ -618,67 +617,56 @@ class InputBox extends React.Component { // where we type in the function and cl
 
   render() {
     return (
+      <div>
+        <ListGroup>
 
-      <ListGroup>
+          {
+            this.props.components.map(comp =>
+              <ListGroup.Item className="ListGroupItem" >
+                <div key={comp}>
 
-        {
-          this.props.components.map(comp =>
-            <ListGroup.Item >
-              <div key={comp}>
-
-                <Input components={this.props.components} id={comp} />
-
-
-
-                <label>Domain</label>
-
-                {
-                  <ReactSlider
-                    defaultValue={[-1000, 1000]}
-                    max={1000}
-                    min={-1000}
-                    renderThumb={(props, state) => <div {...props}>{state.valueNow}</div>}
-                    onAfterChange={val => { this.handleChangeDomain(comp, val); }}
-                    className="horizontal-slider-twohandle"
-                    thumbClassName="sliderThumb"
-                    trackClassName="sliderTrack"
-                    pearling={true}
-
-                  />
-                }
+                  <Input components={this.props.components} id={comp} deleteFunction={this.handleDeleteFunction} />
 
 
 
-                {this.props.components.length > 1 &&
-                  <button onClick={this.handleDelete.bind(this, comp)}>Delete this graph</button>
-                }
+                  <label>Domain</label>
 
-
-
-                <select id={comp + "audioType"} onChange={this.handleChangeInstrument.bind(this, comp)}>
                   {
-                    instrumentList.map((name, index) => {
-                      if (index <= 127) {
-                        return <option key={index} value={index}>{name}</option>
+                    <ReactSlider
+                      defaultValue={[-1000, 1000]}
+                      max={1000}
+                      min={-1000}
+                      renderThumb={(props, state) => <div {...props}>{state.valueNow}</div>}
+                      onAfterChange={val => { this.handleChangeDomain(comp, val); }}
+                      className="horizontal-slider-twohandle"
+                      thumbClassName="sliderThumb"
+                      trackClassName="sliderTrack"
+                      pearling={true}
 
-                      }
-                    })
+                    />
                   }
-                </select>
+
+                  <select id={comp + "audioType"} onChange={this.handleChangeInstrument.bind(this, comp)}>
+                    {
+                      instrumentList.map((name, index) => {
+                        if (index <= 127) {
+                          return <option key={index} value={index}>{name}</option>
+
+                        }
+                      })
+                    }
+                  </select>
 
 
+                </div>
+              </ListGroup.Item>
 
-                <button onClick={this.handleCreate.bind(this, comp)}>New graph</button>
+            )
 
-
-              </div>
-            </ListGroup.Item>
-
-          )
-
-        }
-      </ListGroup>
-
+          }
+        </ListGroup>
+        <Button className="newFunctionButton" variant="dark" onClick={this.handleCreate.bind(this)}>{<i class="fa fa-plus" aria-hidden="true"></i>}</Button>
+      </div>
 
     )
   }
@@ -690,7 +678,6 @@ class Input extends React.Component {
     this.state = { text: "" };
 
     this.handleChange = this.handleChange.bind(this);
-    this.handleClear = this.handleClear.bind(this);
     this.idIndex = this.props.components.findIndex(el => el === this.props.id);
     this.colour = graphObject.expressions[this.idIndex].colour;
 
@@ -716,12 +703,7 @@ class Input extends React.Component {
 
 
   }
-  handleClear() {
-    this.setState({ text: "" });
-    graphObject.expressions[this.idIndex].expr = "";
-    graphObject.expressions[this.idIndex].validity = false;
-    graphObject.GraphCalculator();
-  }
+
 
 
   render() {
@@ -739,11 +721,9 @@ class Input extends React.Component {
         />
 
         <MuteButton audioSourceID={this.props.id} components={this.props.components} />
-        <InputGroup.Append>
 
-          <Button variant="outline-dark" onClick={this.handleClear}>Clear</Button>
+        <DeleteButton id={this.props.id} components={this.props.components} deleteFunction={this.props.deleteFunction} />
 
-        </InputGroup.Append>
 
 
       </InputGroup >
@@ -752,6 +732,79 @@ class Input extends React.Component {
     )
   }
 }
+class DeleteButton extends React.Component {
+  constructor(props) {
+    super(props)
+    this.handleClick = this.handleClick.bind(this);
+  }
+  handleClick() {
+    this.props.deleteFunction(this.props.id);
+  }
+  render() {
+    return (
+
+      <InputGroup.Append>
+
+        <Button variant="outline-dark" onClick={this.handleClick}>{<i class="fa fa-times" aria-hidden="true"></i>}</Button>
+
+      </InputGroup.Append>
+
+
+    )
+  }
+
+}
+class MuteButton extends React.Component {
+  constructor(props) {
+    super(props)
+    this.handleChange = this.handleChange.bind(this)
+    this.state = { iconToShow: "fas fa-volume-mute", isMuted: true };
+
+
+  }
+
+
+  handleChange() {
+    let idIndex = this.props.components.findIndex(el => el === this.props.audioSourceID);
+
+    if (this.state.isMuted === true) {
+      timingGraphObject.audioSources[idIndex].changeMuteToggle(false) // not muted
+      this.setState({ iconToShow: "fas fa-volume-up", isMuted: false });
+    }
+    else {
+      timingGraphObject.audioSources[idIndex].changeMuteToggle(true) // muted
+      this.setState({ iconToShow: "fas fa-volume-mute", isMuted: true });
+
+    }
+
+  }
+
+  render() {
+    return (
+
+
+      <InputGroup.Append>
+
+
+        <Button
+          variant="outline-dark"
+
+
+          onClick={this.handleChange}
+        >
+          {<i className={this.state.iconToShow}></i>}
+        </Button>
+
+
+
+      </InputGroup.Append>
+
+
+    )
+  }
+
+}
+
 
 
 class BPS extends React.Component {
@@ -839,57 +892,6 @@ class TBB extends React.Component {
 
       </Form>
 
-
-
-    )
-  }
-
-}
-
-class MuteButton extends React.Component {
-  constructor(props) {
-    super(props)
-    this.handleChange = this.handleChange.bind(this)
-    this.state = { iconToShow: "fas fa-volume-mute", isMuted: true };
-
-
-  }
-
-
-  handleChange() {
-    let idIndex = this.props.components.findIndex(el => el === this.props.audioSourceID);
-
-    if (this.state.isMuted === true) {
-      timingGraphObject.audioSources[idIndex].changeMuteToggle(false) // not muted
-      this.setState({ iconToShow: "fas fa-volume-up", isMuted: false });
-    }
-    else {
-      timingGraphObject.audioSources[idIndex].changeMuteToggle(true) // muted
-      this.setState({ iconToShow: "fas fa-volume-mute", isMuted: true });
-
-    }
-
-  }
-
-  render() {
-    return (
-
-
-      <InputGroup.Append>
-
-
-        <Button
-          variant="outline-dark"
-
-
-          onClick={this.handleChange}
-        >
-          {<i className={this.state.iconToShow}></i>}
-        </Button>
-
-
-
-      </InputGroup.Append>
 
 
     )
