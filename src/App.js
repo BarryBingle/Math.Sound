@@ -276,6 +276,7 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
     }
     if (this.lowerLimitX * ratio < -1000) {
       ratio = -1000 / this.lowerLimitX
+
     }
     this.pointInterval *= ratio;
     this.zoomRatio *= ratio;
@@ -369,11 +370,13 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
 
     shiftByX *= this.zoomRatio;
     shiftByY *= this.zoomRatio;
+    console.log(shiftByX)
     if (this.upperLimitX - shiftByX > 1000) {
-      shiftByX = 1000 - this.upperLimitX
+      shiftByX = 0
     }
     if (this.lowerLimitX - shiftByX < -1000) {
-      shiftByX = -1000 - this.lowerLimitX
+      shiftByX = 0
+
     }
 
 
