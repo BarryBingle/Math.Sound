@@ -1,5 +1,4 @@
 import React from 'react';
-import ReactDOM from "react-dom";
 import './App.css';
 import { derivative, parse } from 'mathjs';
 import ReactSlider from 'react-slider';
@@ -26,7 +25,6 @@ restrictedMath.import({
 
 }, { override: true })
 
-let pointsPlotted = 0;
 
 
 
@@ -35,7 +33,7 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
   Setup: function () {
 
 
-    this.plotsPerScreen = 750; //TODO allow this to change for different processor strengths
+    this.plotsPerScreen = 400; //TODO allow this to change for different processor strengths
     this.numGrids = 20; // number of grid markings
 
     this.scaleColour = "#000D34";
@@ -44,7 +42,6 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
 
     if (window.innerWidth < 992) {
       this.WindowSizeChange(document.getElementById('graphwrapper').getBoundingClientRect().width, window.innerHeight * 0.5);
-      console.log(document.getElementById('graphwrapper').getBoundingClientRect().width)
     }
     else {
       this.WindowSizeChange(window.innerWidth * 0.65, window.innerHeight);
@@ -86,16 +83,12 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
   },
   ExpressionValidifier(exprText, idIndex) { // checks expression before making calculations to avoid wasting resources
     let exprObject;
-
     try { // first test is to try and parse the expression
-      exprObject = parse(exprText);
-
-      console.log(exprObject)
-      console.log(exprObject.toString())
+      exprObject = parse(exprText)
 
 
-    } catch (error) {
-      console.log("couldn't parse")
+
+    } catch {
       return false;
     }
     // second test is to see if all variables are x
@@ -113,7 +106,6 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
     // either x or a function, also check that no operation is done that has a symbolnode that is not x
     for (let i = 0; i < functionNodes.length; i++) {
       if (functionNodes[i].args.length < 1) {
-        console.log("non acceptable operation found")
 
         return false;
       }
@@ -127,7 +119,6 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
 
         }
         else {
-          console.log("non acceptable symbolnode found")
           return false;
         }
 
@@ -135,17 +126,14 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
       for (let i = 0; i < operatorNodes.length; i++) { // check that no operation is done with non x symbolnode, otherwise tan * 4 etc would break it
         if (operatorNodes[i].isBinary()) {
           if (operatorNodes[i].args[0].isSymbolNode && operatorNodes[i].args[0].name !== 'x') {
-            console.log("non acceptable operation found")
             return false;
           }
           if (operatorNodes[i].args[1].isSymbolNode && operatorNodes[i].args[1].name !== 'x') {
-            console.log("non acceptable operation found")
             return false;
           }
         }
         if (operatorNodes[i].isUnary()) { // protests from x! as no negative factorials allowed
           if (operatorNodes[i].args[0].isSymbolNode) {
-            console.log("non acceptable operation found")
 
             return false;
           }
@@ -166,7 +154,6 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
 
     }
     catch {
-      console.log("derivative couldn't be found")
     }
 
 
@@ -189,7 +176,6 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
   ,
 
   GraphCalculator: function () { // drawing your own graphs 
-    pointsPlotted = 0;
     this.ClearAll();
     this.DrawAxes();
 
@@ -253,15 +239,12 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
           prevGradient = curGradient;
 
 
-          pointsPlotted++;
 
 
         }
-        // console.log(pointsPlotted);
 
         graphContext.stroke();
         this.pointInterval = prevPointInterval;
-        // console.log(this.pointInterval);
 
       }
 
@@ -370,7 +353,6 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
 
     shiftByX *= this.zoomRatio;
     shiftByY *= this.zoomRatio;
-    console.log(shiftByX)
     if (this.upperLimitX - shiftByX > 1000) {
       shiftByX = 0
     }
@@ -440,7 +422,7 @@ let timingGraphObject = {
       if (graphObject.expressions[i].validity === true && timerBarPosition >= graphObject.expressions[i].domain[0] && timerBarPosition <= graphObject.expressions[i].domain[1] && this.audioSources[i].muteToggle === false) {
         let newFreq = graphObject.calculate(timerBarPosition, graphObject.expressions[i].expr);
         this.audioSourcesToPlay.push(this.audioSources[i]);
-        if (newFreq <= -12000) {// todo maybe display frequency too high?
+        if (newFreq <= -12000) {
           this.audioSources[i].changeFrequency(-12000);
 
         }
@@ -482,7 +464,7 @@ let timingGraphObject = {
 
 //#region Audio
 
-let instrumentList = new Instruments().names;
+let instrumentList = new Instruments().names.splice(0, 127);
 
 class audioSource {
   constructor() {
@@ -690,7 +672,6 @@ class InstrumentChooser extends React.Component {
 
     let newAudioType = document.getElementById(this.props.id + "audioType").value;
     this.props.changeInstrumentFunction(this.props.id, newAudioType);
-    console.log(newAudioType)
 
   }
   render() {
@@ -698,10 +679,9 @@ class InstrumentChooser extends React.Component {
       <Form.Control as="select" onChange={this.handleChange} id={this.props.id + "audioType"}>
         {
           instrumentList.map((name, index) => {
-            if (index <= 127) {
-              return <option key={index} value={index}>{name}</option>
 
-            }
+            return <option key={index} value={index}>{name}</option>
+
           })
         }
       </Form.Control>
@@ -730,14 +710,14 @@ class Input extends React.Component {
     this.setState({ text: e.target.value });
 
 
-    graphObject.expressions[this.idIndex].expr = e.target.value;
+    graphObject.expressions[this.idIndex].expr = e.target.value.toLowerCase();
     graphObject.expressions[this.idIndex].validity = false;
     if (e.target.value === "") {
       graphObject.expressions[this.idIndex].expr = "";
       graphObject.expressions[this.idIndex].validity = false;
       graphObject.GraphCalculator();
     }
-    else if (graphObject.ExpressionValidifier(e.target.value, this.idIndex) === true) {
+    else if (graphObject.ExpressionValidifier(graphObject.expressions[this.idIndex].expr, this.idIndex) === true) {
       graphObject.expressions[this.idIndex].validity = true;
       graphObject.GraphCalculator();
     }
@@ -1012,12 +992,12 @@ class Graphs extends React.Component {
         if (this.prevPointDist > 0) {
           if (curPointDist > this.prevPointDist) {
 
-            graphObject.Scale(0.99);
+            graphObject.Scale(0.9);
 
           }
           else if (curPointDist < this.prevPointDist) {
 
-            graphObject.Scale(1.01);
+            graphObject.Scale(1.1);
 
           }
         }
@@ -1049,6 +1029,7 @@ class Graphs extends React.Component {
   }
   handleMouseUp(e) {
     e.persist();
+    this.pointerEventArray = [];
     for (let i = 0; i < this.pointerEventArray.length; i++) {
       if (this.pointerEventArray[i].pointerId === e.pointerId) {
         this.pointerEventArray.splice(i, 1);
@@ -1083,7 +1064,6 @@ class Graphs extends React.Component {
   }
   handleResize() {
     if (window.innerWidth !== this.windowWidth) { // makes resize only happen for width changes
-      console.log(document.getElementById('graphwrapper').getBoundingClientRect().width)
       this.windowWidth = window.innerWidth;
       if (window.innerWidth < 992) { // if the window less than lg breakpoint
         graphObject.WindowSizeChange(document.getElementById('graphwrapper').getBoundingClientRect().width, window.innerHeight * 0.5);
