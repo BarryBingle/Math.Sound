@@ -4,7 +4,7 @@ import './App.css';
 import { derivative, parse } from 'mathjs';
 import ReactSlider from 'react-slider';
 import { create, all } from 'mathjs';
-import { Col, Container, ListGroup, Row, Nav, Form, FormControl, InputGroup, Button } from 'react-bootstrap';
+import { Col, Container, ListGroup, Row, Nav, Form, Accordion, InputGroup, Button, Card } from 'react-bootstrap';
 
 //#region Graph Actions
 
@@ -487,7 +487,7 @@ class audioSource {
     this.instrumentNumber = 0; // default
     this.frequency = 0;
     this.player = new Instruments();
-    this.muteToggle = true;
+    this.muteToggle = false;
 
 
   }
@@ -613,8 +613,8 @@ class InputBox extends React.Component { // where we type in the function and cl
 
           {
             this.props.components.map(comp =>
-              <ListGroup.Item className="ListGroupItem" >
-                <div key={comp}>
+              <ListGroup.Item className="ListGroupItem" key={comp}>
+                <div >
                   <Input components={this.props.components} id={comp} deleteFunction={this.handleDeleteFunction} />
                   {
                     <ReactSlider
@@ -640,7 +640,38 @@ class InputBox extends React.Component { // where we type in the function and cl
           }
         </ListGroup>
         <Button className="newFunctionButton" variant="dark" onClick={this.handleCreate.bind(this)}>{<i className="fa fa-plus" aria-hidden="true"></i>}</Button>
-      </div>
+
+        <Accordion className="HelpAccordion">
+          <Card>
+            <Card.Header>
+              <Accordion.Toggle as={Button} variant="dark" eventKey="0" className="HelpButton">
+                About
+              </Accordion.Toggle>
+            </Card.Header>
+            <Accordion.Collapse eventKey="0">
+              <Card.Body>
+                To make sounds, enter in any function with x as the only variable, like sin(x)*50 or x^3+x+24 or 400/x. A sound will be made where the vertical counting bar crosses any function.
+                <br />
+                <br />
+                The frequency of the sound will be the y value of the intersection of the function and vertical bar, this means that higher values will work better e.g sin(x)*50 rather than sin(x).
+                The Beats Per Screen slider at the top of screen amount of times the vertical bar will occur per screen.
+                The Time Per Beat slider controls the time between the vertical bar moving.
+                You can adjust the domain of the function with its slider below it, along with its instrument.
+                You can add as many functions as you like, click the plus button to create a new one, and the x button to delete one graph.
+                <br />
+                <br />
+
+                Just play around with it! Pick whatever instrument sounds interesting, fiddle around with the sliders
+                and make something that sounds cool!
+                <br />
+
+              </Card.Body>
+            </Accordion.Collapse>
+
+          </Card>
+
+        </Accordion>
+      </div >
 
     )
   }
@@ -717,9 +748,10 @@ class Input extends React.Component {
     return (
       <InputGroup>
         <InputGroup.Prepend>
-          <InputGroup.Text style={{ backgroundColor: this.colour }}> </InputGroup.Text>
+          <InputGroup.Text className="colourIndicator" style={{ backgroundColor: this.colour }}> </InputGroup.Text>
         </InputGroup.Prepend>
         <Form.Control
+          className="Input"
           isInvalid={!graphObject.expressions[this.idIndex].validity}
           placeholder="Enter function e.g 3x + 70"
           type="text"
@@ -763,7 +795,7 @@ class MuteButton extends React.Component {
   constructor(props) {
     super(props)
     this.handleChange = this.handleChange.bind(this)
-    this.state = { iconToShow: "fas fa-volume-mute", isMuted: true };
+    this.state = { iconToShow: "fas fa-volume-up", isMuted: false };
 
 
   }
@@ -1130,10 +1162,6 @@ class App extends React.PureComponent {
 
 
           </Row>
-          <Row id="help">
-            <p>help</p>
-          </Row>
-
 
 
 
