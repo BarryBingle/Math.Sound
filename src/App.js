@@ -43,10 +43,7 @@ let graphObject = { // main object, with all graphCanvas manipulation methods
     graphContext.lineJoin = "round";
 
     if (window.innerWidth < 992) {
-      this.WindowSizeChange(document.getElementById('graphwrapper').getBoundingClientRect().width, window.innerHeight * 0.5); // raid boss of a bug, on the first time around calling
-      this.WindowSizeChange(document.getElementById('graphwrapper').getBoundingClientRect().width, window.innerHeight * 0.5); // this function if the window is below 400px wide it will
-      //be off by 17 for some reason. I would guess it's some initialization changing its width but this fixes it so 
-
+      this.WindowSizeChange(document.getElementById('graphwrapper').getBoundingClientRect().width, window.innerHeight * 0.5);
       console.log(document.getElementById('graphwrapper').getBoundingClientRect().width)
     }
     else {
@@ -723,7 +720,7 @@ class Input extends React.Component {
           <InputGroup.Text style={{ backgroundColor: this.colour }}> </InputGroup.Text>
         </InputGroup.Prepend>
         <Form.Control
-
+          isInvalid={!graphObject.expressions[this.idIndex].validity}
           placeholder="Enter function e.g 3x + 70"
           type="text"
           value={this.state.text}
