@@ -701,24 +701,28 @@ class Input extends React.Component {
     this.handleChange = this.handleChange.bind(this);
     this.idIndex = this.props.components.findIndex(el => el === this.props.id);
     this.colour = graphObject.expressions[this.idIndex].colour;
+    this.validity = false;
 
   }
 
   handleChange(e) {
 
-
+    this.idIndex =this.props.components.findIndex(el => el === this.props.id);
     this.setState({ text: e.target.value });
 
 
     graphObject.expressions[this.idIndex].expr = e.target.value.toLowerCase();
     graphObject.expressions[this.idIndex].validity = false;
+    this.validity = false;
     if (e.target.value === "") {
       graphObject.expressions[this.idIndex].expr = "";
       graphObject.expressions[this.idIndex].validity = false;
+      this.validity = false;
       graphObject.GraphCalculator();
     }
     else if (graphObject.ExpressionValidifier(graphObject.expressions[this.idIndex].expr, this.idIndex) === true) {
       graphObject.expressions[this.idIndex].validity = true;
+      this.validity = true;
       graphObject.GraphCalculator();
     }
 
@@ -735,7 +739,7 @@ class Input extends React.Component {
         </InputGroup.Prepend>
         <Form.Control
           className="Input"
-          isInvalid={!graphObject.expressions[this.idIndex].validity}
+          isInvalid={!this.validity}
           placeholder="Enter function e.g 3x + 70"
           type="text"
           value={this.state.text}
